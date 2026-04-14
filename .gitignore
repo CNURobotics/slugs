@@ -33,3 +33,10 @@ lib/cudd-2.5.0/*
 # Doxygen generated stuff
 src/html/*
 src/latex/*
+
+lib
+tools/*.html
+tools/*.slugsin
+tools/*.structuredslugs
+tools/*.out
+.vscode

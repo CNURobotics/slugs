@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2.7
 #
 # Interactive Strategy Simulator and Debugger for Slugs
 import curses, sys, subprocess
@@ -16,7 +16,7 @@ MAX_OVERALL_NUMBER = 999999
 # 2: value forced by the safety assumptions and guarantees
 # 3: value forced by the safety assumptions and guarantees and the values chosen by the user
 #
-# The types must be numbered such that taking the minimum of different values for different bits (except for edited_by_hand) gives the correct labelling for a composite value obtained by merging the bits to an integer value. 
+# The types must be numbered such that taking the minimum of different values for different bits (except for edited_by_hand) gives the correct labelling for a composite value obtained by merging the bits to an integer value.
 CHOSEN_BY_COMPUTER = 0
 EDITED_BY_HAND = 1
 FORCED_VALUE_ASSUMPTIONS = 2
@@ -37,6 +37,8 @@ specFile = " ".join(sys.argv[1:])
 # Start slugs
 # ==================================
 slugsLink = sys.argv[0][0:sys.argv[0].rfind("cursesSimulator.py")]+"../src/slugs"
+slugsLink = "/usr/local/bin/slugs"
+
 slugsProcess = subprocess.Popen(slugsLink+" --interactiveStrategy "+specFile, shell=True, bufsize=1048000, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 # Get input APs
@@ -82,7 +84,7 @@ for (isOutput,source,startIndex) in [(False,inputAPs,0),(True,outputAPs,len(inpu
                 # Is a master variable
                 (varNum,minimum,maximum) = suffix.split(".")
                 assert varNum=="0"
-                structuredVariables.append(varName)    
+                structuredVariables.append(varName)
                 structuredVariablesBitPositions.append({0:i+startIndex})
                 structuredVariablesMin.append(int(minimum))
                 structuredVariablesMax.append(int(maximum))
@@ -105,7 +107,7 @@ for (isOutput,source,startIndex) in [(False,inputAPs,0),(True,outputAPs,len(inpu
                 structuredVariablesBitPositions[indexFound][int(suffix)] = i+startIndex
         else:
             # is Unstructured
-            structuredVariables.append(a)    
+            structuredVariables.append(a)
             structuredVariablesBitPositions.append({0:i+startIndex})
             structuredVariablesMin.append(0)
             structuredVariablesMax.append(1)
@@ -115,7 +117,7 @@ for (isOutput,source,startIndex) in [(False,inputAPs,0),(True,outputAPs,len(inpu
 # ===============================================
 # Translating between structured positions/states
 # and the state/position representations that
-# slugs needs 
+# slugs needs
 # ===============================================
 def computeBinarySlugsStringFromStructuredLabeledTraceElementsForcedElements(traceElement):
     result = {}
@@ -152,8 +154,8 @@ def parseBinaryStateTupleIntoStructuredTuple(structuredTuple):
         thisOne = structuredVariablesMin[i]
         types = set([])
         for (a,b) in structuredVariablesBitPositions[i].iteritems():
-            # print >>sys.stderr,(a,b)
-            # print >>sys.stderr,(structuredTuple)
+            #print >>sys.stderr,(a,b)
+            #print >>sys.stderr,(structuredTuple)
             if structuredTuple[b]=="A":
                 thisOne += 1 << a
                 types.add(FORCED_VALUE_ASSUMPTIONS)
@@ -173,10 +175,10 @@ def parseBinaryStateTupleIntoStructuredTuple(structuredTuple):
                 thisOne += 1 << a
                 types.add(CHOSEN_BY_COMPUTER)
             elif structuredTuple[b]=="0":
-                types.add(CHOSEN_BY_COMPUTER)            
+                types.add(CHOSEN_BY_COMPUTER)
             else:
-                print >>sys.stderr, "Error: Found literal ",structuredTuple[b]," in structured Tuple"
-                assert False
+                print >>sys.stderr, "Error: Found literal '",structuredTuple[b],"' in structured Tuple"
+                #assert False
         result.append((thisOne,min(types)))
     return result
 
@@ -217,7 +219,7 @@ unfixedState = []
 for i in xrange(0,len(structuredVariables)):
     unfixedState.append((structuredVariablesMin[i],CHOSEN_BY_COMPUTER))
 unfixedState = tuple(unfixedState) # Enforce non-mutability for the rest of this script
-trace = [list(unfixedState)] 
+trace = [list(unfixedState)]
 traceGoalNumbers = [(0,0)]
 traceFlags = [set([])]
 
@@ -260,7 +262,7 @@ try:
                 print >> sys.stderr, "IREAD: "+slugsProcess.stdout.readline() # Skip the prompt
                 initLine = slugsProcess.stdout.readline().strip()
                 print >> sys.stderr, "INITLINE: "+initLine
-                isValidElement = True            
+                isValidElement = True
                 if (initLine=="FAILASSUMPTIONS"):
                     traceFlags[0].add("A")
                     isValidElement = False
@@ -283,7 +285,7 @@ try:
                 else:
                     if "L" in traceFlags[0]:
                         traceFlags[0].remove("L")
-                
+
                 if isValidElement:
                     parsedTraceElement = parseBinaryStateTupleIntoStructuredTuple(initLine)
                     # Merge the computed concretized trace element back into the actual trace
@@ -292,7 +294,7 @@ try:
                             assert trace[0][i][0]==parsedTraceElement[i][0]
                         else:
                             trace[0][i] = parsedTraceElement[i]
-                
+
         else:
             # Update non-initial state
             if not "(OOB)" in traceFlags[len(trace)-1]:
@@ -305,7 +307,7 @@ try:
                 print >> sys.stderr, "IREAD: "+slugsProcess.stdout.readline() # Skip the prompt
                 positionLine = slugsProcess.stdout.readline().strip()
                 print >> sys.stderr, "POSILINE: "+positionLine
-                isValidElement = True            
+                isValidElement = True
                 if (positionLine=="FAILASSUMPTIONS"):
                     traceFlags[len(trace)-1].add("A")
                     isValidElement = False
@@ -341,7 +343,7 @@ try:
                     nextLivenessAssumption = int(slugsProcess.stdout.readline().strip())
                     nextLivenessGuarantee = int(slugsProcess.stdout.readline().strip())
                     traceGoalNumbers[len(trace)-1] = (nextLivenessAssumption,nextLivenessGuarantee)
-                    
+
 
         # ==============================
         # Draw interface
@@ -355,18 +357,22 @@ try:
             initText = initText + "[...]"+specFile[len(specFile)-xsize+len(initText)+6:]
         else:
             initText = initText + specFile
-        initText = initText + ")"        
+        initText = initText + ")"
         stdscr.addstr(0, 0, initText+(xsize-min(xsize,len(initText)))*" ",curses.color_pair(1))
         stdscr.addstr(ysize-1, 0, (xsize-1)*" ",curses.color_pair(1))
         stdscr.addstr(ysize-1, 0, "Press (h) for help.",curses.color_pair(1))
         stdscr.insstr(ysize-1, 20, " ",curses.color_pair(1))
 
+        print "Need width ={", maxLenInputOrOutputName
+        print "Need height={", len(structuredVariables)+13
+
         # Main part
-        if (xsize<max(72,maxLenInputOrOutputName+46)):
-            stdscr.addstr(2, 0, "Terminal is not wide enough!",curses.color_pair(1))
-        elif (ysize<max(len(structuredVariables)+13,17)) :
-            stdscr.addstr(2, 0, "Terminal is not high enough!",curses.color_pair(1))
-        elif helpScreen==1:
+        #if (xsize<max(72,maxLenInputOrOutputName+46)):
+        #    stdscr.addstr(2, 0, "Terminal is not wide enough!",curses.color_pair(1))
+        #elif (ysize<max(len(structuredVariables)+13,17)) :
+        #    stdscr.addstr(2, 0, "Terminal is not high enough!",curses.color_pair(1))
+        #el
+        if helpScreen==1:
             stdscr.addstr(2, 0, "Basic Keys:")
             stdscr.addstr(3, 0, " - (h): Toggle Help")
             stdscr.addstr(4, 0, " - (q): Quit")
@@ -417,7 +423,7 @@ try:
             stdscr.addstr(currentLine+2, 1, "| Sys. Goal. Num. "+(maxLenInputOrOutputName-15)*" "+"|")
             stdscr.addstr(currentLine+3, 1, "| Flags           "+(maxLenInputOrOutputName-15)*" "+"|")
             stdscr.addstr(currentLine+4, 1, "+-"+(maxLenInputOrOutputName)*"-"+"-+")
-            
+
             # 2. Print a trace elements:
             minTraceElement = max(0,len(trace)-5)
             maxTraceElement = len(trace)
@@ -441,7 +447,7 @@ try:
                         if trace[element+minTraceElement][i][1]==EDITED_BY_HAND:
                             stdscr.addstr(currentLine, startX+1, str(trace[element+minTraceElement][i][0]), curses.A_UNDERLINE)
                         else:
-                            stdscr.addstr(currentLine, startX+1, "?") 
+                            stdscr.addstr(currentLine, startX+1, "?")
                     else:
                         if trace[element+minTraceElement][i][1]==CHOSEN_BY_COMPUTER:
                             stdscr.addstr(currentLine, startX+1, str(trace[element+minTraceElement][i][0]))
@@ -453,7 +459,7 @@ try:
                             stdscr.addstr(currentLine, startX+1, str(trace[element+minTraceElement][i][0]), curses.color_pair(3))
                         elif trace[element+minTraceElement][i][1]==FORCED_VALUE_ASSUMPTIONS_AND_STRATEGY:
                             stdscr.addstr(currentLine, startX+1, str(trace[element+minTraceElement][i][0]), curses.color_pair(4))
-                    stdscr.addstr(currentLine, startX+7, "|") 
+                    stdscr.addstr(currentLine, startX+7, "|")
                     currentLine += 1
                 stdscr.addstr(currentLine, startX, "=======+")
 
@@ -473,11 +479,11 @@ try:
             cursorY = 5+cursorInWhichProposition
             if structuredVariablesIsOutput[cursorInWhichProposition]:
                 cursorY += 1
-            stdscr.move(cursorY, cursorX)             
-        
+            stdscr.move(cursorY, cursorX)
+
         #=======================
         # Process key presses
-        #=======================        
+        #=======================
         c = stdscr.getch()
 
         # 0. Truncate all currently edited numbers to their limits when moving the cursor
@@ -490,7 +496,7 @@ try:
                 trace[traceElementBeingEdited][cursorInWhichProposition] = (structuredVariablesMax[cursorInWhichProposition],CHOSEN_BY_COMPUTER)
             if "(OOB)" in traceFlags[traceElementBeingEdited]:
                 traceFlags[traceElementBeingEdited].remove("(OOB)")
-        
+
         # 1. Change proosition selection
         if c == curses.KEY_DOWN:
             if cursorInWhichProposition<len(structuredVariables)-1:
@@ -515,19 +521,19 @@ try:
                 trace = trace[0:len(trace)-1]
                 traceGoalNumbers = traceGoalNumbers[0:len(trace)]
                 traceFlags = traceFlags[0:len(trace)]
-                
 
-            
-                   
+
+
+
         # 3. Numbers and Backspace
         if (c>=ord('0') and c<=ord('9')) or c==curses.KEY_BACKSPACE:
-            
+
             # Only allow editing if no error currently there
             if (trace[element+minTraceElement][cursorInWhichProposition][1]==EDITED_BY_HAND) or not \
               (("A" in traceFlags[element+minTraceElement]) or ("G" in traceFlags[element+minTraceElement]) or ("L" in traceFlags[element+minTraceElement])):
 
                 traceElementBeingEdited = len(trace)-1
-                if (c>=ord('0') and c<=ord('9')):    
+                if (c>=ord('0') and c<=ord('9')):
                     number = c - ord('0')
                     if cursorEditPosition==None:
                         trace[traceElementBeingEdited][cursorInWhichProposition] = (number,EDITED_BY_HAND)
@@ -551,8 +557,8 @@ try:
                 else:
                     if "(OOB)" in traceFlags[traceElementBeingEdited]:
                         traceFlags[traceElementBeingEdited].remove("(OOB)")
-        
-        # 4. Special keys                        
+
+        # 4. Special keys
         if c == ord('q'):
             break  # Exit the while()
         if c == ord('h'):

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# This python script containts lists of all plugins
+# This python script contains lists of all plugins
 # and computes the code for main.cpp that lists all allowed parameter combinations
 import os, sys
 
@@ -12,12 +12,12 @@ import os, sys
 # This one is used for the combinable/uncombinable parameters below
 def combineWithAllOtherParameters(a):
     assert len([(b,c) for (b,c) in listOfCommandLineParameters if b==a])==1
-    return [(a,b) for (b,c) in listOfCommandLineParameters if not b==a] 
+    return [(a,b) for (b,c) in listOfCommandLineParameters if not b==a]
 def combineWithAllOtherParametersBut(a,q):
     assert len([(b,c) for (b,c) in listOfCommandLineParameters if b==a])==1
     for x in q:
         assert len([(b,c) for (b,c) in listOfCommandLineParameters if b==x])==1
-    return [(a,b) for (b,c) in listOfCommandLineParameters if not b==a and not (b in q)] 
+    return [(a,b) for (b,c) in listOfCommandLineParameters if not b==a and not (b in q)]
 
 # This one is a basic parameter->plugin mapper.
 def simpleInstantiationMapper(param,templateName,params):
@@ -70,12 +70,12 @@ listOfCommandLineParameters = [
     ("computeIncompleteInformationEstimator","Computes a imcomplete-information state estimation controller."),
     ("nonDeterministicMotion","Computes a controller using an non-deterministic motion abstraction."),
     ("twoDimensionalCost","Computes a controller that optimizes for waiting and action cost at the same time."),
-    ("cooperativeGR1Strategy","Computes a controller strategy that is cooperative with its environment.")    
+    ("cooperativeGR1Strategy","Computes a controller strategy that is cooperative with its environment.")
 ]
 
 # Which command line parameters can be combined?
 combinableParameters = [
-    
+
     # SysInitRoboticsSemantics works with pretty much everything
     # where realizability is checked in the classical sense
     ("sysInitRoboticsSemantics","explicitStrategy"),
@@ -91,7 +91,7 @@ combinableParameters = [
     ("sysInitRoboticsSemantics","fixedPointRecycling"),
     ("sysInitRoboticsSemantics","IROSfastslow"),
     ("sysInitRoboticsSemantics","twoDimensionalCost"),
-    
+
     # Strategy extraction options
     ("explicitStrategy","biasForAction"),
     ("symbolicStrategy","biasForAction"),
@@ -112,45 +112,45 @@ combinableParameters = [
     ("simpleSymbolicStrategy","twoDimensionalCost"),
     ("symbolicStrategy","twoDimensionalCost"),
     ("symbolicStrategy","fixedPointRecycling"),
-    
-    
+
+
     # Permissive Strategies
     ("extractExplicitPermissiveStrategy","simpleRecovery"),
-    
+
     # Parameters to "restrictToReachableStates"
     ("analyzeInitialPositions","restrictToReachableStates"),
-    
+
     # Analyze Initial Positions
     ("analyzeInitialPositions","restrictToReachableStates"),
-    
+
     # NondeterministicMotion
     ("nonDeterministicMotion","sysInitRoboticsSemantics"),
     ("nonDeterministicMotion","interactiveStrategy"),
-    
+
     # Bias for Action
     ("biasForAction","extractExplicitPermissiveStrategy"),
     ("biasForAction","simpleRecovery"),
     ("biasForAction","interactiveStrategy"),
-    
+
     # Simple Recovery
     ("simpleRecovery","IROSfastslow"),
     ("simpleRecovery","twoDimensionalCost"),
     ("simpleRecovery","cooperativeGR1Strategy"),
     ("simpleRecovery","fixedPointRecycling"),
-    
+
     # FixedPointRecycling and Interactive Strategy
     ("fixedPointRecycling","extractExplicitPermissiveStrategy"),
     ("fixedPointRecycling","interactiveStrategy"),
     ("interactiveStrategy","IROSfastslow"),
     ("interactiveStrategy","twoDimensionalCost"),
     ("interactiveStrategy","cooperativeGR1Strategy"),
-    
+
     # Misc
     ("IROSfastslow","extractExplicitPermissiveStrategy"),
     ("extractExplicitPermissiveStrategy","twoDimensionalCost"),
 
 
-    
+
 ] + combineWithAllOtherParameters("jsonOutput") # there is a requirement below that this requires an explicit-state strategy output
 
 # Which ones cannot be combined?
@@ -169,25 +169,25 @@ uncombinableParameters = [
     ("computeWeakenedSafetyAssumptions","simpleSymbolicStrategy"),
     ("computeWeakenedSafetyAssumptions","sysInitRoboticsSemantics"),
 
-    
+
     # Strategy can only be simple symbolic, symbolic or explicit
     ("explicitStrategy","symbolicStrategy"),
     ("explicitStrategy","simpleSymbolicStrategy"),
     ("symbolicStrategy","simpleSymbolicStrategy"),
-    
+
     # No JSON Output for symbolic strategies
     ("jsonOutput","symbolicStrategy"),
     ("jsonOutput","simpleSymbolicStrategy"),
-    
+
     # Permissive strategies have a special output format.
     ("explicitStrategy","extractExplicitPermissiveStrategy"),
     ("extractExplicitPermissiveStrategy","simpleSymbolicStrategy"),
     ("symbolicStrategy","extractExplicitPermissiveStrategy"),
     ("jsonOutput","extractExplicitPermissiveStrategy"),
-    
+
     # Incompatible plugins that modify the computation of the winning positions
     ("cooperativeGR1Strategy","biasForAction"),
-    
+
     # CounterStrategy
     ("symbolicStrategy","counterStrategy"),
     ("simpleSymbolicStrategy","counterStrategy"),
@@ -199,19 +199,19 @@ uncombinableParameters = [
     ("counterStrategy","twoDimensionalCost"),
     ("counterStrategy","cooperativeGR1Strategy"),
     ("explicitStrategy","counterStrategy"),
-    
+
     # Bias For Action
     ("biasForAction","counterStrategy"),
     ("biasForAction","fixedPointRecycling"),
     ("biasForAction","IROSfastslow"),
     ("biasForAction","twoDimensionalCost"),
-    
+
     # FixedPointRecycling and Interactive Strategy
     ("fixedPointRecycling","IROSfastslow"),
     ("fixedPointRecycling","twoDimensionalCost"),
     ("fixedPointRecycling","cooperativeGR1Strategy"),
     ("interactiveStrategy","extractExplicitPermissiveStrategy"),
-    
+
     # Misc
     ("IROSfastslow","twoDimensionalCost"),
     ("IROSfastslow","cooperativeGR1Strategy"),
@@ -224,7 +224,7 @@ uncombinableParameters = [
 requiredParameters = [
     ("restrictToReachableStates",["analyzeInitialPositions"]),
     ("simpleRecovery",["explicitStrategy","symbolicStrategy","simpleSymbolicStrategy"]),
-    ("jsonOutput",["explicitStrategy"]),
+    ("jsonOutput",["explicitStrategy", "counterStrategy"]),
 ]
 
 # -------------------------------------------------------
@@ -270,8 +270,8 @@ orderOfPluginClassesInInstantiations = [
     # - execute() modifying plugins
     #   -> XExtractSymbolicStrategy
     #   -> XExtractExplicitStrategy
-    
-    
+
+
     ("XRoboticsSemantics","XBiasForAction"),
     ("XExtractSymbolicStrategy","XBiasForAction"),
     ("XExtractExplicitStrategy","XBiasForAction"),
@@ -282,7 +282,7 @@ orderOfPluginClassesInInstantiations = [
     ("XRoboticsSemantics","XCooperativeGR1Strategy"),
     ("XExtractSymbolicStrategy","XCooperativeGR1Strategy"),
     ("XExtractExplicitStrategy","XCooperativeGR1Strategy"),
-    
+
     ("XExtractPermissiveExplicitStrategy","XIROSFS"),
     ("XRoboticsSemantics","XIROSFS"),
     ("XRoboticsSemantics","XTwoDimensionalCost"),
@@ -303,14 +303,14 @@ orderOfPluginClassesInInstantiations = [
     ("XExtractPermissiveExplicitStrategy","XBiasForAction"),
     ("XExtractSymbolicStrategy","XTwoDimensionalCost"),
     ("XExtractSymbolicStrategy","XFixedPointRecycling")
-    
+
 ]
 
 
 
 # -------------------------------------------------------
 # Mapping Plugin combinations to class instantiations
-# -------------------------------------------------------    
+# -------------------------------------------------------
 listOfCommandLineCombinationToClassInstantiationMappers = []
 
 # Two dimensional cost Motion (needs to know if robotics Semantics has been selected and if simple recovery is active or not)
@@ -358,9 +358,13 @@ listOfCommandLineCombinationToClassInstantiationMappers.append(analyzeInitialPos
 # Counter-strategy extraction
 def counterStrategyExtraction(params):
     sysIn = "sysInitRoboticsSemantics" in params
+    jo = "jsonOutput" in params
     if "counterStrategy" in params:
-        ret = [("XCounterStrategy","true" if sysIn else "false"),("XExtractExplicitCounterStrategy",)]
-        params.difference_update(["counterStrategy","sysInitRoboticsSemantics"])
+        ret = [
+            ("XCounterStrategy","true" if sysIn else "false"),
+            ("XExtractExplicitCounterStrategy","true" if jo else "false"),
+        ]
+        params.difference_update(["counterStrategy","sysInitRoboticsSemantics","jsonOutput"])
         return ret
     return []
 listOfCommandLineCombinationToClassInstantiationMappers.append(counterStrategyExtraction)
@@ -385,7 +389,7 @@ def basicExtraction(params):
     params.difference_update(["explicitStrategy", "simpleSymbolicStrategy", "symbolicStrategy"])
     return ret
 listOfCommandLineCombinationToClassInstantiationMappers.append(basicExtraction)
-    
+
 # Simple Plugins
 listOfCommandLineCombinationToClassInstantiationMappers.append(lambda x: simpleInstantiationMapper("cooperativeGR1Strategy","XCooperativeGR1Strategy",x))
 listOfCommandLineCombinationToClassInstantiationMappers.append(lambda x: simpleInstantiationMapper("computeIncompleteInformationEstimator","XIncompleteInformationEstimatorSynthesis",x))
@@ -410,17 +414,17 @@ for (a,b) in listOfCommandLineParameters:
     for (c,d) in listOfCommandLineParameters:
         if (a!=c):
             if (not (a,c) in combinableParameters) and (not (c,a) in combinableParameters) and (not (a,c) in uncombinableParameters) and (not (c,a) in uncombinableParameters):
-                print >>sys.stderr, "Warning: The combinability of the parameters --"+a+" and --"+c+" is not known."
-                
+                print("Warning: The combinability of the parameters --"+a+" and --"+c+" is not known.", file=sys.stderr)
+
 
 # combinableParameters and uncombinableParameters does not consider any parameters that are not in listOfCommandLineParameters
 allParamsStraight = set([a for (a,b) in listOfCommandLineParameters])
 for (a,b) in combinableParameters+uncombinableParameters:
     if not a in allParamsStraight:
-        print >>sys.stderr,"Typo in combinableParameters or uncombinableParameters: "+a
+        print("Typo in combinableParameters or uncombinableParameters: "+a, file=sys.stderr)
         sys.exit(1)
     if not b in allParamsStraight:
-        print >>sys.stderr,"Typo in combinableParameters or uncombinableParameters: "+b
+        print("Typo in combinableParameters or uncombinableParameters: "+b, file=sys.stderr)
         sys.exit(1)
 del allParamsStraight
 
@@ -434,7 +438,7 @@ def recurse(optionsSoFar,remainingCommandLineOptions):
 
     # Base case
     if len(remainingCommandLineOptions)==0:
-    
+
         # First check if all constraints in "requiredParameters" are satisfied.
         for (condition,constraint) in requiredParameters:
             if condition in optionsSoFar:
@@ -445,15 +449,15 @@ def recurse(optionsSoFar,remainingCommandLineOptions):
                 if not found:
                     # A constraint is not fulfilled
                     return
-        
-        # Sanity check:            
+
+        # Sanity check:
         # No two parameters may be marked as combinable *and* uncombinable at the same time
         # -> We check that here, so tha the requiredParameters are taken into account.
         for a in optionsSoFar:
             for b in optionsSoFar:
                 if (a,b) in combinableParameters or (b,a) in combinableParameters:
                     if (a,b) in uncombinableParameters or (b,a) in uncombinableParameters:
-                        print >>sys.stderr,"Two parameters are both combinable and uncombinable: "+a+", "+b
+                        print("Two parameters are both combinable and uncombinable: "+a+", "+b, file=sys.stderr)
                         sys.exit(1)
 
         # Obtain the list of instantiations.
@@ -464,29 +468,29 @@ def recurse(optionsSoFar,remainingCommandLineOptions):
             instantiations = instantiations + fn(optionsSoFar)
         # Check if all command line paramters have been "eaten up"
         if len(optionsSoFar)>0:
-            print >>sys.stderr, "Error: For the parameter list ", str(optionsSoFar),", the parameters ", str(optionsSoFarOrig)," have not been 'eaten'"
+            print("Error: For the parameter list ", str(optionsSoFar),", the parameters ", str(optionsSoFarOrig)," have not been 'eaten'", file=sys.stderr)
             sys.exit(1)
-        
+
         # For the classes, we order according to 'orderOfPluginClassesInInstantiations'
         # This is a topological sorting.
         orderedInstantiations = []
         while len(instantiations)>0:
             noPriority = False
-            for i in xrange(0,len(instantiations)):
+            for i in range(0,len(instantiations)):
                 thisOne = True
-                for j in xrange(0,len(instantiations)):
+                for j in range(0,len(instantiations)):
                     if i!=j:
                         if (instantiations[j][0],instantiations[i][0]) in orderOfPluginClassesInInstantiations:
                             thisOne = False
                         # Sanity check
                         elif not (instantiations[i][0],instantiations[j][0]) in orderOfPluginClassesInInstantiations:
-                            print >>sys.stderr, "Warning: The order of plugin classes",instantiations[j][0],"and",instantiations[i][0],"is not known."
+                            print("Warning: The order of plugin classes",instantiations[j][0],"and",instantiations[i][0],"is not known.", file=sys.stderr)
 
                 if thisOne:
                     noPriority = i
             orderedInstantiations.append(instantiations[noPriority])
             instantiations.remove(instantiations[noPriority])
-            
+
         # Build the command
         prefix = ""
         postfix = ""
@@ -495,18 +499,18 @@ def recurse(optionsSoFar,remainingCommandLineOptions):
             postfix = ">" + postfix
             if len(p)>1:
                 postfix = ","+",".join(p[1:]) + postfix
-        
+
         # Compute the line
         optionsSoFarOrig.sort()
         thisLine = "OptionCombination(\""+" ".join(["--"+a for a in optionsSoFarOrig])+"\","+prefix+"GR1Context"+postfix+"::makeInstance)"
         parameterCombinations.append("    "+thisLine.replace(" >",">")+",")
         return
-        
+
     # No extra options case
     nextOption = remainingCommandLineOptions[0]
     remainingCommandLineOptions = remainingCommandLineOptions[1:]
     recurse(optionsSoFar,remainingCommandLineOptions)
-    
+
     # Add this extra option
     for test in optionsSoFar:
         if (not (test,nextOption) in combinableParameters) and (not (nextOption,test) in combinableParameters):
@@ -526,7 +530,7 @@ oldMainFile = []
 with open("main.cpp","r") as mainFileFile:
     for a in mainFileFile.readlines():
         oldMainFile.append(a)
-        
+
 
 #============================================================
 # Compute the new main.cpp file
@@ -553,7 +557,7 @@ for line in oldMainFile:
     else:
         if mode==None:
             newLines.append(line)
-            
+
 #============================================================
 # Write the new main.cpp file
 #============================================================

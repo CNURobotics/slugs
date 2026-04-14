@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 
 import random
@@ -27,7 +27,7 @@ def readSlugsFile(slugsFile):
 
     for line in specFile.readlines():
         line = line.strip()
-        print >>sys.stderr, line
+        print(line, file=sys.stderr)
         if line == "":
             pass
         elif line.startswith("["):
@@ -72,22 +72,22 @@ def checkRealizability(inputFile):
     # Compile to a structured Slugs specification
     # =====================================================
     command = slugsCompilerAndBasicOptions + " "+inputFile+" > "+slugsCompiledFile+" 2> "+slugsErrorFile
-    print >>sys.stderr, "Executing: "+command
+    print("Executing: "+command, file=sys.stderr)
     retValue = os.system(command)
     if (retValue!=0):
-        print >>sys.stderr, "================================================"
-        print >>sys.stderr, "Slugs compilation failed!"
-        print >>sys.stderr, "================================================\n"
+        print("================================================", file=sys.stderr)
+        print("Slugs compilation failed!", file=sys.stderr)
+        print("================================================\n", file=sys.stderr)
         with open(slugsErrorFile,"r") as errorFile:
             for line in errorFile.readlines():
                 sys.stderr.write(line)
         raise SlugsException("Could not build report")
 
     command = slugsExecutableAndBasicOptions + " "+slugsCompiledFile+" > "+slugsReturnFile+" 2> "+slugsErrorFile
-    print >>sys.stderr, "Executing: "+command
+    print("Executing: "+command, file=sys.stderr)
     retValue = os.system(command)
     if (retValue!=0):
-        print >>sys.stderr, "Slugs failed!"
+        print("Slugs failed!", file=sys.stderr)
         raise Exception("Could not build report")
     realizable = None
     with open(slugsErrorFile,"r") as f:
@@ -97,7 +97,7 @@ def checkRealizability(inputFile):
             elif line.startswith("RESULT: Specification is unrealizable."):
                 realizable = False
     if realizable==None:
-        print >>sys.stderr, "Error: slugs was unable to determine the realizability of the specification."
+        print("Error: slugs was unable to determine the realizability of the specification.", file=sys.stderr)
         raise SlugsException("Fatal error")
     return realizable
 
@@ -110,21 +110,21 @@ def analyzeStuckAtConstant(slugsFile):
     # =====================================================
     # Read the structured input specification
     # =====================================================
-    originalSlugsFile = readSlugsFile(slugsFile)    
-    
+    originalSlugsFile = readSlugsFile(slugsFile)
+
     # =====================================================
     # Check for realizability once
     # =====================================================
     isRealizable = checkRealizability(slugsFile)
-    
-    print "Starting point is",
+
+    print("Starting point is", end=' ')
     if isRealizable:
-        print "a realizable",
+        print("a realizable", end=' ')
         (categoryA,categoryB,categoryC,text) = ("[OUTPUT]","[SYS_TRANS]","[SYS_INIT]","output signal")
     else:
-        print "an unrealizable",
+        print("an unrealizable", end=' ')
         (categoryA,categoryB,categoryC,text) = ("[INPUT]","[ENV_TRANS]","[ENV_INIT]","input signal")
-    print "specification"
+    print("specification")
 
     # Going through the inputs and outputs
     for line in originalSlugsFile[categoryA]:
@@ -140,31 +140,31 @@ def analyzeStuckAtConstant(slugsFile):
                 parts = line.split(":")
                 parts = [a.strip() for a in parts]
                 if len(parts)!=2:
-                    print >>sys.stderr, "Error reading line '"+line+"' in section "+variableType+": Too many ':'s!"
+                    print("Error reading line '"+line+"' in section "+variableType+": Too many ':'s!", file=sys.stderr)
                     raise Exception("Failed to translate file.")
                 parts2 = parts[1].split("...")
                 if len(parts2)!=2:
-                    print >>sys.stderr, "Error reading line '"+line+"' in section "+variableType+": Syntax should be name:from...to, where the latter two are numbers"
+                    print("Error reading line '"+line+"' in section "+variableType+": Syntax should be name:from...to, where the latter two are numbers", file=sys.stderr)
                     raise Exception("Failed to translate file.")
                 try:
                     minValue = int(parts2[0])
                     maxValue = int(parts2[1])
                 except ValueError:
-                    print >>sys.stderr, "Error reading line '"+line+"' in section "+variableType+": the minimal and maximal values are not given as numbers"
+                    print("Error reading line '"+line+"' in section "+variableType+": the minimal and maximal values are not given as numbers", file=sys.stderr)
                     raise Exception("Failed to translate file.")
                 if minValue>maxValue:
-                    print >>sys.stderr, "Error reading line '"+line+"' in section "+variableType+": the minimal value should be smaller than the maximum one (or at least equal)"
+                    print("Error reading line '"+line+"' in section "+variableType+": the minimal value should be smaller than the maximum one (or at least equal)", file=sys.stderr)
                     raise Exception("Failed to translate file.")
-                
+
                 # Fill the dictionaries numberAPLimits, translatedNames with information
                 variable = parts[0]
-                
+
                 # Go through all values
-                for value in xrange(minValue,maxValue+1):
+                for value in range(minValue,maxValue+1):
                     thisSpec = copy.deepcopy(originalSlugsFile)
                     thisSpec[categoryB].append(variable+"'="+str(value))
                     thisSpec[categoryC].append(variable+"="+str(value))
-    
+
                     writeSlugsFile(slugsModifiedFile,thisSpec)
                     if (checkRealizability(slugsModifiedFile) == isRealizable):
                         nonDifferenceCausingValues.append(str(value))
@@ -182,11 +182,11 @@ def analyzeStuckAtConstant(slugsFile):
                     changing = (checkRealizability(slugsModifiedFile) == isRealizable)
                     if changing:
                         nonDifferenceCausingValues.append(str(value))
-            
+
             if len(nonDifferenceCausingValues)==0:
-                print "Fixing the value of the "+text+" "+variable+" changes that."
+                print("Fixing the value of the "+text+" "+variable+" changes that.")
             else:
-                print "Fixing the value of the "+text+" "+variable+" to ",
+                print("Fixing the value of the "+text+" "+variable+" to ", end=' ')
                 for i,x in enumerate(nonDifferenceCausingValues):
                     if i>0:
                         if len(nonDifferenceCausingValues)<=2:
@@ -196,7 +196,7 @@ def analyzeStuckAtConstant(slugsFile):
                     if (i==len(nonDifferenceCausingValues)-1) and i>0:
                         sys.stdout.write("or ")
                     sys.stdout.write(x)
-                print " does not change this fact."
+                print(" does not change this fact.")
 
 
 
@@ -209,11 +209,10 @@ if __name__ == "__main__":
     if len(sys.argv)>1:
         slugsFile = sys.argv[1]
     else:
-        print >>sys.stderr,"Error: Expected non-incremental slugs file name as input."
+        print("Error: Expected non-incremental slugs file name as input.", file=sys.stderr)
         sys.exit(1)
 
     try:
         analyzeStuckAtConstant(slugsFile)
-    except SlugsException,e:
+    except SlugsException as e:
         sys.exit(1)
-

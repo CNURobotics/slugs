@@ -30,7 +30,7 @@ def tokenize(str):
 
     res = []
     while str:
-        # Ignoring stuff        
+        # Ignoring stuff
         if str[0].isspace() or (str[0]=='\n'):
             str = str[1:]
             continue
@@ -190,9 +190,9 @@ def flatten_as_much_as_possible(tree):
 # =====================================================
 def printTree(tree,depth=0):
     if isinstance(tree,str):
-        print >>sys.stderr," "*depth+tree
+        print(" "*depth+tree, file=sys.stderr)
     else:
-        print >>sys.stderr," "*depth+tree[0]
+        print(" "*depth+tree[0], file=sys.stderr)
         for a in tree[1:]:
             printTree(a,depth+2)
 
@@ -210,7 +210,7 @@ def parseLTL(ltlTxt,reasonForNotBeingASlugsFormula):
     except p.ParseErrors as exception:
         for t,e in exception.errors:
             if t[0] == p.EOF:
-                print >>sys.stderr, "Formula end not expected here"
+                print("Formula end not expected here", file=sys.stderr)
                 continue
 
             found = repr(t[0])
@@ -226,8 +226,8 @@ def parseLTL(ltlTxt,reasonForNotBeingASlugsFormula):
 
 # =====================================================
 # Slugs functions for working with numbers
-# This function computes a "memory structure" for the 
-# slugs input whose final value is the result of the comparison 
+# This function computes a "memory structure" for the
+# slugs input whose final value is the result of the comparison
 # =====================================================
 
 #------------------------------------------
@@ -237,10 +237,10 @@ def parseLTL(ltlTxt,reasonForNotBeingASlugsFormula):
 def recurseCalculationSubformula(tree,memoryStructureParts, isPrimed):
     if (tree[0]=="NumberExpression"):
         assert len(tree)==4 # Everything else would have been filtered out already
-        part1MemoryStructurePointers = recurseCalculationSubformula(tree[1],memoryStructureParts, isPrimed)        
-        part2MemoryStructurePointers = recurseCalculationSubformula(tree[3],memoryStructureParts, isPrimed)  
+        part1MemoryStructurePointers = recurseCalculationSubformula(tree[1],memoryStructureParts, isPrimed)
+        part2MemoryStructurePointers = recurseCalculationSubformula(tree[3],memoryStructureParts, isPrimed)
 
-        # Addition? 
+        # Addition?
         if tree[2][0]=="AdditionOperator":
             if len(part1MemoryStructurePointers)==0: return part2MemoryStructurePointers
             if len(part2MemoryStructurePointers)==0: return part1MemoryStructurePointers
@@ -254,7 +254,7 @@ def recurseCalculationSubformula(tree,memoryStructureParts, isPrimed):
             for i in range(1,len(part1MemoryStructurePointers)):
                 memoryStructureParts.append(["^ ^",part1MemoryStructurePointers[i],part2MemoryStructurePointers[i],"?",str(len(memoryStructureParts)-1)])
                 memoryStructureParts.append(["| | &",part1MemoryStructurePointers[i],part2MemoryStructurePointers[i],"& ?",str(len(memoryStructureParts)-2),part1MemoryStructurePointers[i],"& ?",str(len(memoryStructureParts)-2),part2MemoryStructurePointers[i]])
-           
+
             # Second part: Part of the word where j1 is shorter than j2
             for i in range(len(part1MemoryStructurePointers),len(part2MemoryStructurePointers)):
                 memoryStructureParts.append(["^",part2MemoryStructurePointers[i],"?",str(len(memoryStructureParts)-1)])
@@ -270,7 +270,7 @@ def recurseCalculationSubformula(tree,memoryStructureParts, isPrimed):
             raise Exception("Found unsupported NumberExpression operator:"+tree[2][0])
 
     # Parse Numeral
-    elif (tree[0]=="numeral"): 
+    elif (tree[0]=="numeral"):
         parameter = int(tree[1])
         result = []
         while parameter != 0:
@@ -284,7 +284,7 @@ def recurseCalculationSubformula(tree,memoryStructureParts, isPrimed):
     # Work on NumID
     elif (tree[0]=="numID"):
         apName = tree[1]
-        primedLocally = apName[len(apName)-1]=="'"        
+        primedLocally = apName[len(apName)-1]=="'"
         if primedLocally and isPrimed:
             raise Exception("Variable is used primed in the scope of a next-operator, which is not supported: "+apName)
         if primedLocally:
@@ -302,12 +302,12 @@ def recurseCalculationSubformula(tree,memoryStructureParts, isPrimed):
 
     # Overwrite the least significant bits of some expression
     elif tree[0]=="LeastSignificantBitOverwriteExpression":
-        part1MemoryStructurePointers = recurseCalculationSubformula(tree[1],memoryStructureParts, isPrimed)        
-        part2MemoryStructurePointers = recurseCalculationSubformula(tree[3],memoryStructureParts, isPrimed)  
+        part1MemoryStructurePointers = recurseCalculationSubformula(tree[1],memoryStructureParts, isPrimed)
+        part2MemoryStructurePointers = recurseCalculationSubformula(tree[3],memoryStructureParts, isPrimed)
         assert len(part1MemoryStructurePointers)<len(part2MemoryStructurePointers)
         return part1MemoryStructurePointers+part2MemoryStructurePointers[len(part1MemoryStructurePointers):]
 
-        
+
     else:
         raise Exception("Found currently unsupported calculator subformula type:"+tree[0])
 
@@ -320,7 +320,7 @@ def recurseCalculationSubformula(tree,memoryStructureParts, isPrimed):
 def addMinimumValueToAllVariables(tree):
     if tree[0]=="numID":
         apName = tree[1]
-        primed = apName[len(apName)-1]=="'"        
+        primed = apName[len(apName)-1]=="'"
         if primed:
             apName = apName[0:len(apName)-1]
         (minimum,maximum) = numberAPLimits[apName]
@@ -383,7 +383,7 @@ def computeCalculationSubformula(tree, isPrimed):
 
     else:
         raise Exception("Found unsupported Number Comparison operator:"+tree[2][1][0])
-    
+
     # Return memory structure
     return ["$",str(len(memoryStructureParts))] + [b for a in memoryStructureParts for b in a]
 
@@ -438,7 +438,7 @@ def parseSimpleFormula(tree, isPrimed):
     print("Cannot parse sub-tree!",file=sys.stderr)
     print(tree,file=sys.stderr)
     raise Exception("Slugs parsing error")
-    
+
 
 def translateToSlugsFormat(tree):
     tokens = parseSimpleFormula(tree,False)
@@ -498,17 +498,20 @@ def performConversion(inputFile,thoroughly):
                 # Initial comments
                 pass
             elif mode!="":
-                lines[mode].append(line)
+                if line.startswith("#"):
+                    lines[mode].append(line)
+                else:
+                    lines[mode].append(line.split("#")[0])  # ignore trailing comments
 
     specFile.close()
 
-    # ---------------------------------------    
+    # ---------------------------------------
     # Reparse input lines
     # Create information along the way that
     # encodes the possible values
-    # ---------------------------------------    
+    # ---------------------------------------
     translatedIOLines = {"[INPUT]":[],"[OUTPUT]":[],"[OBSERVABLE_INPUT]":[],"[UNOBSERVABLE_INPUT]":[],"[CONTROLLABLE_INPUT]":[]}
-    for variableType in ["[INPUT]","[OUTPUT]","[OBSERVABLE_INPUT]","[UNOBSERVABLE_INPUT]","[CONTROLLABLE_INPUT]"]: 
+    for variableType in ["[INPUT]","[OUTPUT]","[OBSERVABLE_INPUT]","[UNOBSERVABLE_INPUT]","[CONTROLLABLE_INPUT]"]:
         for line in lines[variableType]:
             if line=="" or line.startswith("#"):
                 translatedIOLines[variableType].append(line.strip())
@@ -537,7 +540,7 @@ def performConversion(inputFile,thoroughly):
                 if minValue>maxValue:
                     print("Error reading line '"+line+"' in section "+variableType+": the minimal value should be smaller than the maximum one (or at least equal)",file=sys.stderr)
                     raise Exception("Failed to translate file.")
-                
+
                 # Fill the dictionaries numberAPLimits, translatedNames with information
                 variable = parts[0]
                 numberAPs.append(parts[0])
@@ -553,7 +556,7 @@ def performConversion(inputFile,thoroughly):
                 booleanAPs.extend(translatedNames[parts[0]])
 
                 # Define limits
-                limitDiff = maxValue - minValue + 1 # +1 because the range is inclusive 
+                limitDiff = maxValue - minValue + 1 # +1 because the range is inclusive
                 if (2**numberAPNofBits[variable]) != limitDiff:
 
                     propertyDestination = "ENV" if variableType.endswith("INPUT]") else "SYS"
@@ -589,19 +592,19 @@ def performConversion(inputFile,thoroughly):
                 booleanAPs.append(line+"'")
                 translatedIOLines[variableType].append(line)
 
-    # ---------------------------------------    
+    # ---------------------------------------
     # Output new input/output lines
-    # ---------------------------------------    
-    for variableType in ["[INPUT]","[OUTPUT]","[OBSERVABLE_INPUT]","[UNOBSERVABLE_INPUT]","[CONTROLLABLE_INPUT]"]: 
+    # ---------------------------------------
+    for variableType in ["[INPUT]","[OUTPUT]","[OBSERVABLE_INPUT]","[UNOBSERVABLE_INPUT]","[CONTROLLABLE_INPUT]"]:
         if len(translatedIOLines[variableType])>0:
             print(variableType)
             for a in translatedIOLines[variableType]:
                 print(a)
-            print("")
+            #print("")
 
-    # ---------------------------------------    
+    # ---------------------------------------
     # Go through the properties and translate
-    # ---------------------------------------    
+    # ---------------------------------------
     for propertyType in ["[ENV_TRANS]","[ENV_INIT]","[SYS_TRANS]","[SYS_INIT]","[ENV_LIVENESS]","[SYS_LIVENESS]"]:
         if len(lines[propertyType])>0:
             print(propertyType)
@@ -616,14 +619,14 @@ def performConversion(inputFile,thoroughly):
                     if isSlugsFormula:
                         print(a)
                     else:
-                        # print >>sys.stderr,a
+                        print(f"Not slugs? {a}", file=sys.stderr)
                         # Try to parse!
-                        tree = parseLTL(a,reasonForNotBeingASlugsFormula)            
-                        # printTree(tree)
+                        tree = parseLTL(a,reasonForNotBeingASlugsFormula)
+                        printTree(tree)
                         currentLine = translateToSlugsFormat(tree)
                         print(currentLine)
-            print("")
-        
+            # print("")
+
 
 
 
@@ -639,7 +642,7 @@ if __name__ == "__main__":
     thoroughly = False
     for parameter in sys.argv[1:]:
         if parameter.startswith("-"):
-            if parameter=="--thorougly":
+            if parameter.startswith("--thoroug"):
                 thoroughly = True
             else:
                 print("Error: did not understand parameter '"+parameter+"'",file=sys.stderr)
