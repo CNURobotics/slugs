@@ -3,6 +3,9 @@
 
 #include "gr1context.hpp"
 #include <string>
+#include <chrono>
+#include <iomanip>
+#include <unordered_set>
 
 /**
  * An extension that triggers that a strategy is actually extracted.
@@ -38,6 +41,14 @@ protected:
     XExtractExplicitStrategy<T,oneStepRecovery,jsonOutput>(std::list<std::string> &filenames): T(filenames) {}
 
 public:
+    struct ExplicitExtractionStats {
+        unsigned int initialStateCount;
+        unsigned int stateCount;
+        unsigned int transitionCount;
+        unsigned int maxOutDegree;
+        unsigned int visitedRankCount;
+        unsigned int strategyDumpEntries;
+    };
 
     void init(std::list<std::string> &filenames) {
         T::init(filenames);
@@ -52,8 +63,10 @@ public:
     void execute() {
         T::execute();
         if (realizable) {
+            auto extractionStart = std::chrono::steady_clock::now();
+            ExplicitExtractionStats stats;
             if (outputFilename=="") {
-                computeAndPrintExplicitStateStrategy(std::cout);
+                stats = computeAndPrintExplicitStateStrategy(std::cout);
             } else {
                 std::ofstream of(outputFilename.c_str());
                 if (of.fail()) {
@@ -61,7 +74,7 @@ public:
                     ex << "Error: Could not open output file'" << outputFilename << "\n";
                     throw ex;
                 }
-                computeAndPrintExplicitStateStrategy(of);
+                stats = computeAndPrintExplicitStateStrategy(of);
                 if (of.fail()) {
                     SlugsException ex(false);
                     ex << "Error: Writing to output file'" << outputFilename << "failed. \n";
@@ -69,6 +82,24 @@ public:
                 }
                 of.close();
             }
+            auto extractionEnd = std::chrono::steady_clock::now();
+            const double extractionSeconds = std::chrono::duration<double>(extractionEnd - extractionStart).count();
+            std::cerr << "Timing:\n";
+            std::cerr << std::fixed << std::setprecision(6);
+            std::cerr << "  - Explicit strategy extraction time: " << extractionSeconds << " s\n";
+            const double statesPerSecond = (extractionSeconds > 0.0) ? (static_cast<double>(stats.stateCount) / extractionSeconds) : 0.0;
+            const double transitionsPerSecond = (extractionSeconds > 0.0) ? (static_cast<double>(stats.transitionCount) / extractionSeconds) : 0.0;
+            const double avgOutDegree = (stats.stateCount > 0) ? (static_cast<double>(stats.transitionCount) / static_cast<double>(stats.stateCount)) : 0.0;
+            std::cerr << "Extraction stats:\n";
+            std::cerr << "  - Initial explicit states: " << stats.initialStateCount << "\n";
+            std::cerr << "  - Explicit states: " << stats.stateCount << "\n";
+            std::cerr << "  - Explicit transitions: " << stats.transitionCount << "\n";
+            std::cerr << "  - Max out-degree: " << stats.maxOutDegree << "\n";
+            std::cerr << "  - Avg out-degree: " << avgOutDegree << "\n";
+            std::cerr << "  - Visited goal ranks: " << stats.visitedRankCount << " / " << livenessGuarantees.size() << "\n";
+            std::cerr << "  - Strategy dump entries: " << stats.strategyDumpEntries << "\n";
+            std::cerr << "  - Extraction throughput: " << statesPerSecond << " states/s, "
+                      << transitionsPerSecond << " transitions/s\n";
         }
     }
 
@@ -80,7 +111,7 @@ public:
      *        "winningPositions" have been filled by the synthesis algorithm with meaningful data.
      * @param outputStream - Where the strategy shall be printed to.
      */
-    void computeAndPrintExplicitStateStrategy(std::ostream &outputStream) {
+    ExplicitExtractionStats computeAndPrintExplicitStateStrategy(std::ostream &outputStream) {
 
         // We don't want any reordering from this point onwards, as
         // the BDD manipulations from this point onwards are 'kind of simple'.
@@ -103,6 +134,7 @@ public:
             todoInit &= !concreteState;
             todoList.push_back(lookup);
         }
+        const unsigned int initialStateCount = bfsUsedInTheLookupTable.size();
 
         // Prepare positional strategies for the individual goals
         std::vector<BF> positionalStrategiesForTheIndividualGoals(livenessGuarantees.size());
@@ -140,12 +172,17 @@ public:
             outputStream << "],\n\n \"nodes\": {\n";
         }
 
+        unsigned int transitionCount = 0;
+        unsigned int maxOutDegree = 0;
+        std::unordered_set<unsigned int> visitedRanks;
+
         // Extract strategy
         while (todoList.size()>0) {
             std::pair<size_t, unsigned int> current = todoList.front();
             todoList.pop_front();
             unsigned int stateNum = lookupTableForPastStates[current];
             BF currentPossibilities = bfsUsedInTheLookupTable[stateNum];
+            visitedRanks.insert(current.second);
 
             /*{
                 std::ostringstream filename;
@@ -187,6 +224,7 @@ public:
                     (oneStepRecovery)?
                     currentPossibilities:
                     (currentPossibilities & safetyEnv);
+            unsigned int stateOutDegree = 0;
 
             // Switching goals
 #ifndef NDEBUG
@@ -232,6 +270,11 @@ public:
                 }
 
                 outputStream << tn;
+                transitionCount++;
+                stateOutDegree++;
+            }
+            if (stateOutDegree > maxOutDegree) {
+                maxOutDegree = stateOutDegree;
             }
 
 #ifndef NDEBUG
@@ -253,6 +296,15 @@ public:
             // close "nodes" dict and json object
             outputStream << "}}\n";
         }
+
+        ExplicitExtractionStats stats;
+        stats.initialStateCount = initialStateCount;
+        stats.stateCount = bfsUsedInTheLookupTable.size();
+        stats.transitionCount = transitionCount;
+        stats.maxOutDegree = maxOutDegree;
+        stats.visitedRankCount = visitedRanks.size();
+        stats.strategyDumpEntries = strategyDumpingData.size();
+        return stats;
     }
 
     static GR1Context* makeInstance(std::list<std::string> &filenames) {

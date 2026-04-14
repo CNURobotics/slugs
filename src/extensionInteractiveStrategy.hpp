@@ -585,6 +585,7 @@ public:
                 std::cout << ",0" << std::endl; // Flushes, too.
                 currentPosition = initialPosition;
             } else if (command=="XCOMPLETEINIT") {
+                std::cerr << "XCOMPLETEINIT - This command  set of forced values and completes it such that ..." << std::endl;
 
                 // This command takes a set of forced values and completes it such that
                 // the result is an initial state that is winning for the
@@ -621,18 +622,23 @@ public:
                 for (const VariableType &type: {PreInput, PreOutput}) {
                     for (unsigned int i=0;i<variables.size();i++) {
                         if (doesVariableInheritType(i,type)) {
-                            std::cerr << "Considering variable: " << variableNames[i] << std::endl;
+                            std::cerr << "Considering variable["<< i << "]: " << variableNames[i]; // << std::endl;
                             if ((possibleInitialPositions & variables[i]).isFalse()) {
+                                std::cerr << " possible & var is False! ('a')" << std::endl;
                                 result[resultPtr] = 'a';
                             } else if ((possibleInitialPositions & !variables[i]).isFalse()) {
+                                std::cerr << " possible & !var is False! ('A')" << std::endl;
                                 result[resultPtr] = 'A';
                             } else {
+                                std::cerr << " possible & /! var is True ('.')" << std::endl;
                                 result[resultPtr] = '.';
                             }
                             resultPtr++;
+                        } else {
+                            std::cerr << "Considering variable["<< i << "]: " << variableNames[i] << " does not inherit type" << std::endl;
                         }
                     }
-                }                
+                }
                 assert(resultPtr==preVars.size());
 
                 if (possibleInitialPositions.isFalse()) {
@@ -658,11 +664,14 @@ public:
                             for (const VariableType &type: {PreInput, PreOutput}) {
                                 for (unsigned int i=0;i<variables.size();i++) {
                                     if (doesVariableInheritType(i,type)) {
+                                        std::cerr << "Considering variable["<< i << "]: " << variableNames[i]; // << std::endl;
                                         if (result[resultPtr]=='.') {
                                             if (!((oldInitialPositions & !variables[i]).isFalse())) {
+                                                std::cerr << " oldIC & !var is False! ('0')" << std::endl;
                                                 result[resultPtr] = '0';
                                                 oldInitialPositions &= !variables[i];
                                             } else if (!((oldInitialPositions & variables[i]).isFalse())) {
+                                                std::cerr << " oldIC & var is False! ('1')" << std::endl;
                                                 result[resultPtr] = '1';
                                                 oldInitialPositions &= variables[i];
                                             } else {
@@ -670,6 +679,8 @@ public:
                                             }
                                         }
                                         resultPtr++;
+                                    //} else {
+                                    //    std::cerr << "Considering variable["<< i << "]: " << variableNames[i] << " does not inherit type" << std::endl;
                                     }
                                 }
                             }
@@ -804,6 +815,7 @@ public:
                 }
             } else if (command=="XSTRATEGYTRANSITION") {
                 // This command computes the strategy's next move
+                std::cerr << "XSTRATEGYTRANSITION - This command computes the strategy's next move" << std::endl;
                 std::cout << "\n"; // Get rid of the prompt
 
                 // First parse the inputs, then the outputs, so that external tools can always set the inputs first
@@ -863,6 +875,7 @@ public:
 
                 if (allSoFar.isFalse()) {
                     std::cout << "FAILASSUMPTIONS" << std::endl;
+                    std::cerr << "FAILASSUMPTIONS @ startingPoint & safetyEnv & forced" << std::endl;
                 } else {
 
                     // So there exist transitions. Prepare result array
@@ -880,6 +893,8 @@ public:
                                     result[resultPtr] = '.';
                                 }
                                 resultPtr++;
+                            //} else {
+                            //    std::cerr << "Considering variable["<< i << "]: " << variableNames[i] << " does not inherit type" << std::endl;
                             }
                         }
                     }
@@ -896,6 +911,7 @@ public:
                     if (allSoFar.isFalse()) {
                         if (realizable) {
                             std::cout << "FAILGUARANTEES" << std::endl;
+                            std::cerr << "FAILGUARANTEES @ realizable with allSoFar &= safetySys" << std::endl;
 
                             // Print variable assignment that satisfies forced and assumptions
                             resultPtr = 0;
@@ -929,20 +945,28 @@ public:
                             std::cout << "FORCEDNONWINNING" << std::endl;
                         }
                     } else {
-
+                        std::cerr << " Checking variables after setting individual goals ..." << std::endl;
                         resultPtr = 0;
                         for (const VariableType &type: {PostInput, PostOutput}) {
                             for (unsigned int i=0;i<variables.size();i++) {
                                 if (doesVariableInheritType(i,type)) {
-                                    std::cerr << "Considering variable: " << variableNames[i] << std::endl;
+                                    std::cerr << "Considering variable: " << variableNames[i] ;//<< std::endl;
                                     if (result[resultPtr]=='.') {
                                         if ((allSoFar & variables[i]).isFalse()) {
+                                            std::cerr << " soFar & var is false  (g/s)" << std::endl;
                                             result[resultPtr] = (realizable)?'g':'s';
                                         } else if ((allSoFar & !variables[i]).isFalse()) {
+                                            std::cerr << " soFar & !var is false  (G/S)" << std::endl;
                                             result[resultPtr] = (realizable)?'G':'S';
+                                        } else {
+                                            std::cerr << " remains unestricted " << result[resultPtr] << std::endl;
                                         }
+                                    } else {
+                                        std::cerr << " already restricted " << result[resultPtr] << std::endl;
                                     }
                                     resultPtr++;
+                                //} else {
+                                //    std::cerr << "Considering variable["<< i << "]: " << variableNames[i] << " does not inherit type" << std::endl;
                                 }
                             }
                         }
@@ -954,41 +978,86 @@ public:
                         if (realizable) {
                             allSoFar &= positionalStrategiesForTheIndividualGoals[livenessGuarantee];
                         } else {
+                            std::cerr << "was OK without safetySys!" << std::endl;
                             allSoFar &= safetySys;
                         }
 
                         BF_newDumpDot(*this,allSoFar,NULL,"/tmp/allSoFarIncludingStrategy.dot");
+                        BF_newDumpDot(*this,safetySys,NULL,"/tmp/safetySys.dot");
 
                         if (allSoFar.isFalse()) {
                             if (realizable) {
                                 std::cout << "FORCEDNONWINNING" << std::endl;
                             } else {
                                 std::cout << "FAILGUARANTEES" << std::endl;
+                                std::cerr << "\n\nFAILGUARANTEES after adding safetySys!\n\n" << std::endl;
+                                std::cerr << "-----------------------------------------" << std::endl;
+
+                                BF oldCheck = oldAllSoFar;
+                                for (unsigned int i=0; i < this->safetySysFormulae.size(); i++) {
+                                    oldCheck &= this->safetySysFormulae[i];
+                                    if (oldCheck.isFalse()) {
+                                        std::cerr << "Considering safetySys eqn [" << i << "] by itself is false!" << std::endl;
+                                    }
+                                    oldCheck = oldAllSoFar;
+                                }
+                                std::cerr << "-----------------------------------------" << std::endl;
+
+                                BF oldOldCheck = oldCheck;
+                                for (unsigned int i=this->safetySysFormulae.size()-1; i> 0; i--) {
+                                    oldCheck &= this->safetySysFormulae[i];
+                                    if (oldCheck.isFalse()) {
+                                        std::cerr << "Considering safetySys eqn [" << i << "] in sequence is false - skip it!" << std::endl;
+                                        oldCheck = oldOldCheck;
+                                    }
+                                    oldOldCheck = oldCheck;
+                                }
+                                std::cerr << "=====================================================" << std::endl;
+
 
                                 resultPtr = 0;
                                 // Print variable assignment that satisfies forced and assumptions
                                 for (const VariableType &type: {PostInput, PostOutput}) {
+                                    std::cerr << "------------- Type ---------------" << std::endl;
                                     for (unsigned int i=0;i<variables.size();i++) {
                                         if (doesVariableInheritType(i,type)) {
+                                            std::cerr << "Considering variable [" << i << "]: " << variableNames[i] ;//<< std::endl;
                                             if (result[resultPtr]=='.') {
-                                                if (!((oldAllSoFar & !variables[i]).isFalse())) {
+                                                if (!((oldAllSoFar & !variables[i]).isFalse()) &&
+                                                    !((oldAllSoFar & variables[i]).isFalse())) {
+                                                    std::cerr << " !(soFar & /!var) is false  (either 0/1 is OK)" << std::endl;
+                                                    result[resultPtr] = '0';
+                                                    oldAllSoFar &= !variables[i];
+                                                } else if (!((oldAllSoFar & !variables[i]).isFalse())) {
+                                                    std::cerr << " !(soFar & !var) is false  (0 is OK)" << std::endl;
                                                     result[resultPtr] = '0';
                                                     oldAllSoFar &= !variables[i];
                                                 } else if (!((oldAllSoFar & variables[i]).isFalse())) {
+                                                    std::cerr << " !(soFar & var) is false  (1 is OK)" << std::endl;
                                                     result[resultPtr] = '1';
                                                     oldAllSoFar &= variables[i];
                                                 } else {
+                                                    std::cerr << " nothing is OK! - throw!" << std::endl;
                                                     throw "Fatal error! Should not occur (5).";
                                                 }
+                                            } else {
+                                                std::cerr << " already restricted to " << result[resultPtr] << std::endl;
                                             }
                                             resultPtr++;
+                                        //} else {
+                                        //    std::cerr << "Considering variable["<< i << "]: " << variableNames[i] << " does not inherit type" << std::endl;
                                         }
+                                        std::cout.flush();
+                                        std::cerr.flush();
                                     }
                                 }
 
                                 // Print position result
-                                for (unsigned int i=0;i<preVars.size();i++) {
+                                for (unsigned int i=0;i<variables.size();i++) {
                                     std::cout << result[i];
+                                    std::cerr << "[" << i << "] : " << variableNames[i] << " = " << result[i] << std::endl;
+                                    std::cout.flush();
+                                    std::cerr.flush();
                                 }
                                 std::cout << std::endl;
                                 std::cout << livenessAssumption % livenessAssumptions.size() << std::endl;
@@ -1048,7 +1117,10 @@ public:
                             // Print position result
                             for (unsigned int i=0;i<preVars.size();i++) {
                                 std::cout << result[i];
-                            }
+                                std::cerr << "[" << i << "] : " << variableNames[i] << " = " << result[i] << std::endl;
+                                std::cout.flush();
+                                std::cerr.flush();
+                        }
                             std::cout << std::endl;
 
                             // Print new assumption and guarantee goal counters
@@ -1065,6 +1137,8 @@ public:
                 std::cout << "Error: Did not understand command '" << command << "'" << std::endl;
             }
         }
+        std::cout.flush();
+        std::cerr.flush();
 
     }
 
