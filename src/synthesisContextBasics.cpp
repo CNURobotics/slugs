@@ -1,7 +1,10 @@
+#include "BF.h"
 #include "gr1context.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <chrono>
+#include <iomanip>
 #include <boost/algorithm/string.hpp>
 
 
@@ -107,11 +110,74 @@ BF GR1Context::parseBooleanFormula(std::string currentLine, std::set<VariableTyp
 
 
 void GR1Context::execute() {
+    auto synthesisStart = std::chrono::steady_clock::now();
     checkRealizability();
+    auto synthesisEnd = std::chrono::steady_clock::now();
+    unsigned int apInputCount = 0;
+    unsigned int apOutputCount = 0;
+    for (unsigned int i = 0; i < variableTypes.size(); i++) {
+        if (variableTypes[i] == PreInput) apInputCount++;
+        if (variableTypes[i] == PreOutput) apOutputCount++;
+    }
     if (realizable) {
         std::cerr << "RESULT: Specification is realizable.\n";
     } else {
         std::cerr << "RESULT: Specification is unrealizable.\n";
+    }
+
+    const double synthesisSeconds = std::chrono::duration<double>(synthesisEnd - synthesisStart).count();
+    std::cerr << "Timing:\n";
+    std::cerr << std::fixed << std::setprecision(6);
+    std::cerr << "  - Synthesis time (checkRealizability only): " << synthesisSeconds << " s\n";
+    std::cerr << "Experiment summary:\n";
+    std::cerr << "  - AP_I (PreInput vars): " << apInputCount << "\n";
+    std::cerr << "  - AP_O (PreOutput vars): " << apOutputCount << "\n";
+    std::cerr << "  - |ENV_TRANS|: " << safetyEnvFormulae.size() << "\n";
+    std::cerr << "  - |SYS_TRANS|: " << safetySysFormulae.size() << "\n";
+    std::cerr << "  - |ENV_LIVENESS|: " << livenessAssumptions.size() << "\n";
+    std::cerr << "  - |SYS_LIVENESS|: " << livenessGuarantees.size() << "\n";
+    std::cerr << "  - CUDD live node count: " << Cudd_ReadNodeCount(mgr.getMgr()) << "\n";
+    std::cerr << "  - CUDD peak node count: " << Cudd_ReadPeakNodeCount(mgr.getMgr()) << "\n";
+    std::cerr << "  - CUDD manager var count: " << Cudd_ReadSize(mgr.getMgr()) << "\n";
+    std::cerr << "  - CUDD reorderings: " << Cudd_ReadReorderings(mgr.getMgr()) << "\n";
+    std::cerr << "  - CUDD reordering time: " << Cudd_ReadReorderingTime(mgr.getMgr()) << " ms\n";
+    std::cerr << "  - CUDD garbage collections: " << Cudd_ReadGarbageCollections(mgr.getMgr()) << "\n";
+    std::cerr << "  - CUDD GC time: " << Cudd_ReadGarbageCollectionTime(mgr.getMgr()) << " ms\n";
+    std::cerr << "  - CUDD memory in use: " << Cudd_ReadMemoryInUse(mgr.getMgr()) << " bytes\n";
+
+    // Compact per-run metrics for cross-spec comparison.
+    auto metricsStart = std::chrono::steady_clock::now();
+    std::cerr << "Complexity metrics (this run):\n";
+    std::cerr << "  1) Manager live-node count: " << Cudd_ReadNodeCount(mgr.getMgr()) << "\n";
+    std::cerr << "     Meaning: current total nodes stored in the CUDD manager unique table.\n";
+    std::cerr << "  2) Winning-region DAG size: " << winningPositions.getSize() << "\n";
+    std::cerr << "     Meaning: size of the BDD representing the computed winning set.\n";
+    double strategyMetricSeconds = 0.0;
+    if (realizable) {
+        auto strategyMetricStart = std::chrono::steady_clock::now();
+        BF strategyRelation = mgr.constantFalse();
+        for (unsigned int i = 0; i < strategyDumpingData.size(); i++) {
+            strategyRelation |= strategyDumpingData[i].second;
+        }
+        auto strategyMetricEnd = std::chrono::steady_clock::now();
+        strategyMetricSeconds = std::chrono::duration<double>(strategyMetricEnd - strategyMetricStart).count();
+        std::cerr << "  3) Strategy BDD DAG size: " << strategyRelation.getSize() << "\n";
+        std::cerr << "     Meaning: merged size of dumped strategy transition BDDs.\n";
+    } else {
+        std::cerr << "  3) Strategy BDD DAG size: N/A (specification unrealizable)\n";
+    }
+
+    std::cerr << "Detailed CUDD manager stats follow (global across all BDDs in this run):\n";
+    std::cerr << "  - unique table/cache sizes and usage reflect total manager load\n";
+    std::cerr << "  - node/memory peaks show worst-case pressure during synthesis\n";
+    std::cerr << "  - these are manager-wide, not a single-formula size metric\n";
+    mgr.printStats(true);
+    auto metricsEnd = std::chrono::steady_clock::now();
+    const double metricsSeconds = std::chrono::duration<double>(metricsEnd - metricsStart).count();
+    std::cerr << "Timing:\n";
+    std::cerr << "  - Metrics reporting time (all of the above, including Cudd_PrintInfo): " << metricsSeconds << " s\n";
+    if (realizable) {
+        std::cerr << "  - Strategy metric construction sub-time (#3 only): " << strategyMetricSeconds << " s\n";
     }
 }
 
@@ -136,7 +202,7 @@ void GR1Context::init(std::list<std::string> &filenames) {
     initSys = mgr.constantTrue();
     safetyEnv = mgr.constantTrue();
     safetySys = mgr.constantTrue();
-    
+
     // The readmode variable stores in which chapter of the input file we are
     int readMode = -1;
     std::string currentLine;
@@ -187,14 +253,21 @@ void GR1Context::init(std::list<std::string> &filenames) {
                     allowedTypes.insert(PreInput);
                     allowedTypes.insert(PreOutput);
                     allowedTypes.insert(PostInput);
-                    safetyEnv &= parseBooleanFormula(currentLine,allowedTypes);
+                    BF bf = parseBooleanFormula(currentLine,allowedTypes);
+                    safetyEnvFormulae.push_back(bf);
+                    safetyEnv &= bf;
                 } else if (readMode==5) {
                     std::set<VariableType> allowedTypes;
                     allowedTypes.insert(PreInput);
                     allowedTypes.insert(PreOutput);
                     allowedTypes.insert(PostInput);
                     allowedTypes.insert(PostOutput);
-                    safetySys &= parseBooleanFormula(currentLine,allowedTypes);
+                    BF bf = parseBooleanFormula(currentLine,allowedTypes);
+                    safetySysFormulae.push_back(bf);
+                    safetySys &= bf;
+                    if (safetySys.isFalse()) {
+                        std::cerr << " safetySys is false at '" << currentLine << "'" << std::endl;
+                    }
                 } else if (readMode==6) {
                     std::set<VariableType> allowedTypes;
                     allowedTypes.insert(PreInput);
@@ -226,4 +299,3 @@ void GR1Context::init(std::list<std::string> &filenames) {
     if (livenessAssumptions.size()==0) livenessAssumptions.push_back(mgr.constantTrue());
     if (livenessGuarantees.size()==0) livenessGuarantees.push_back(mgr.constantTrue());
 }
-

@@ -38,7 +38,7 @@ public:
     BFBdd readBDDFromFile(const char *filename, std::vector<BFBdd> &vars) const;
     void writeBDDToFile(const char *filename, std::string fileprefix, BFBdd bdd, std::vector<BFBdd> &vars, std::vector<std::string> variableNames) const;
 	//void groupVariables(const std::vector<BFBdd> &which);
-	void printStats();
+	void printStats(bool toStdErr = false);
 
 	inline BFBdd constantTrue() const;
 	inline BFBdd constantFalse() const;

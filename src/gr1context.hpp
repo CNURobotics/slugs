@@ -25,6 +25,8 @@ protected:
      */
     std::vector<BF> livenessAssumptions;
     std::vector<BF> livenessGuarantees;
+    std::vector<BF> safetySysFormulae;
+    std::vector<BF> safetyEnvFormulae;
     BF initEnv;
     BF initSys;
     BF safetyEnv;
@@ -81,7 +83,7 @@ public:
     static BF determinize(BF in, std::vector<BF> vars);
     static BF determinizeRandomized(BF in, std::vector<BF> vars);
     virtual void init(std::list<std::string> &filenames);
-    
+
     static GR1Context* makeInstance(std::list<std::string> &filenames) {
         return new GR1Context(filenames);
     }

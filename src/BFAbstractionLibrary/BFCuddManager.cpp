@@ -63,8 +63,8 @@ void BFBddManager::setReorderingMaxBlowup(float reorderingMaxBlowup) {
 /**
  * Some statistics printing function
  */
-void BFBddManager::printStats() {
-	Cudd_PrintInfo(mgr, stdout);
+void BFBddManager::printStats(bool toStdErr) {
+	Cudd_PrintInfo(mgr, toStdErr ? stderr : stdout);
 }
 
 /**
@@ -191,4 +191,3 @@ void BFBddManager::writeBDDToFile(const char *filename, std::string fileprefix, 
     if (storeReturnValue!=DDDMP_SUCCESS) throw "Error: Unable to write BDD to file.";
 
 }
-
