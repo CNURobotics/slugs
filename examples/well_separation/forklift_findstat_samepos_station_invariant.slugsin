@@ -1,0 +1,30 @@
+[INPUT]
+atStation
+
+[OUTPUT]
+mot_STOP
+
+[ENV_INIT]
+## G(atStation), initial part
+atStation
+
+[SYS_INIT]
+1
+
+[ENV_TRANS]
+## G(atStation), transition part
+atStation'
+## samePos: if stopped at a station, stay at a station
+| ! mot_STOP | ! atStation atStation'
+## samePos: if stopped away from a station, stay away from a station
+| ! mot_STOP | atStation ! atStation'
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+## findStat
+atStation
+
+[SYS_LIVENESS]
+1

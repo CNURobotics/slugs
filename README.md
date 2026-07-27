@@ -37,6 +37,54 @@ Note that you will need to:
 - have [`gcc, g++`](https://gcc.gnu.org/) in your `$PATH`,
 - have installed at least the package: `boost`.
 
+Well-separation analysis
+========================
+
+This fork includes an experimental GR(1) well-separation analysis mode for
+compiled `.slugsin` specifications:
+
+> src/slugs --checkWellSeparation examples/well_separation/forklift_cargo_conflict.slugsin
+
+The result is emitted as JSON on standard output. To write JSON to a file:
+
+> src/slugs --checkWellSeparation --jsonOutput examples/well_separation/forklift_cargo_conflict.slugsin result.json
+
+For slower opt-in core diagnostics, add:
+
+> src/slugs --checkWellSeparation --minimizeWellSeparationCore examples/well_separation/forklift_cargo_conflict.slugsin
+
+The JSON includes a pre-release `format_version` currently set to `0.1`, tool
+metadata, status, Maoz/Ringert case labels, category-level responsible
+assumptions with source indexes and line numbers, and a representative
+state-cube witness when available. Witnesses include compact `details` metadata
+for one-step safety violations or abstract liveness traps. Assumption names are
+read from `##` comments immediately before environment assumption clauses.
+When `--minimizeWellSeparationCore` is used, `core_assumptions` reports a
+1-minimal non-well-separated subset found via delta debugging (Zeller's
+DDMin), the same search strategy used by the Maoz/Ringert and Gorenstein/
+Maoz/Ringert reference implementations this mode is validated against; this
+is not guaranteed to be a globally smallest core.
+
+Smoke fixtures can be checked with:
+
+> SLUGS_BINARY=src/slugs tools/testWellSeparation.py
+
+The tiny fixtures can also be cross-checked against an explicit-state oracle:
+
+> SLUGS_BINARY=src/slugs tools/testWellSeparationOracle.py
+
+Current limitations:
+
+- The mode analyzes plain compiled `.slugsin` semantics.
+- Auxiliary variables introduced by higher-level specification compilers are not
+  separated from ordinary environment assumptions.
+- `responsible_assumptions` and witness `implicated_assumptions` are
+  diagnostics, not minimized non-well-separated cores.
+- `core_assumptions`, when requested, are 1-minimal (via delta debugging) and
+  can require many additional BDD fixed-point calls.
+- The current witness is a representative state cube, not a full strategy,
+  counterstrategy, or trace.
+
 A short primer on the internal structure of slugs
 =================================================
 
@@ -52,5 +100,3 @@ That library has a couple of classes:
 There is also a library component for dumping BDDs - this is useful for debugging. For this to work, the application has to provide the dumping function with information about string names for BDD variable and the like. The 'Slugs' main container class inherits the class 'VariableInfoContainer' for this purpose. 
 
 The actual synthesis part is built around a class that is named "GR1Context". It is explained in the automatically generated doxygen documentation. The class GR1Context is the main class that can be inherited for modifications of the synthesis algorithm. The 'main' function in the file 'main.cpp' is concerned with building the proper context class for synthesis and running the synthesis algorithm then.
-
-

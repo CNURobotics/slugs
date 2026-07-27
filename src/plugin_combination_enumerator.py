@@ -70,7 +70,9 @@ listOfCommandLineParameters = [
     ("computeIncompleteInformationEstimator","Computes a imcomplete-information state estimation controller."),
     ("nonDeterministicMotion","Computes a controller using an non-deterministic motion abstraction."),
     ("twoDimensionalCost","Computes a controller that optimizes for waiting and action cost at the same time."),
-    ("cooperativeGR1Strategy","Computes a controller strategy that is cooperative with its environment.")
+    ("cooperativeGR1Strategy","Computes a controller strategy that is cooperative with its environment."),
+    ("checkWellSeparation","Runs experimental GR(1) well-separation diagnostics and emits a JSON result."),
+    ("minimizeWellSeparationCore","With --checkWellSeparation, computes an opt-in DDMin 1-minimal non-well-separated assumption core.")
 ]
 
 # Which command line parameters can be combined?
@@ -149,6 +151,9 @@ combinableParameters = [
     ("IROSfastslow","extractExplicitPermissiveStrategy"),
     ("extractExplicitPermissiveStrategy","twoDimensionalCost"),
 
+    # Well-separation diagnostics
+    ("checkWellSeparation","minimizeWellSeparationCore"),
+
 
 
 ] + combineWithAllOtherParameters("jsonOutput") # there is a requirement below that this requires an explicit-state strategy output
@@ -218,13 +223,14 @@ uncombinableParameters = [
     ("extractExplicitPermissiveStrategy","cooperativeGR1Strategy"),
     ("twoDimensionalCost","cooperativeGR1Strategy"),
 
-] + combineWithAllOtherParameters("computeIncompleteInformationEstimator") + combineWithAllOtherParameters("computeAbstractWinningTrace") + combineWithAllOtherParameters("computeInterestingRunOfTheSystem") + combineWithAllOtherParameters("analyzeSafetyLivenessInteraction") + combineWithAllOtherParameters("analyzeAssumptions") + combineWithAllOtherParameters("computeCNFFormOfTheSpecification") + combineWithAllOtherParameters("analyzeInterleaving") + combineWithAllOtherParametersBut("analyzeInitialPositions",["restrictToReachableStates"]) + combineWithAllOtherParametersBut("restrictToReachableStates",["analyzeInitialPositions"]) + combineWithAllOtherParametersBut("nonDeterministicMotion",["sysInitRoboticsSemantics","interactiveStrategy"]) + combineWithAllOtherParameters("computeWeakenedSafetyAssumptions")
+] + combineWithAllOtherParameters("computeIncompleteInformationEstimator") + combineWithAllOtherParameters("computeAbstractWinningTrace") + combineWithAllOtherParameters("computeInterestingRunOfTheSystem") + combineWithAllOtherParameters("analyzeSafetyLivenessInteraction") + combineWithAllOtherParameters("analyzeAssumptions") + combineWithAllOtherParameters("computeCNFFormOfTheSpecification") + combineWithAllOtherParameters("analyzeInterleaving") + combineWithAllOtherParametersBut("analyzeInitialPositions",["restrictToReachableStates"]) + combineWithAllOtherParametersBut("restrictToReachableStates",["analyzeInitialPositions"]) + combineWithAllOtherParametersBut("nonDeterministicMotion",["sysInitRoboticsSemantics","interactiveStrategy"]) + combineWithAllOtherParameters("computeWeakenedSafetyAssumptions") + combineWithAllOtherParametersBut("checkWellSeparation",["jsonOutput","minimizeWellSeparationCore"]) + combineWithAllOtherParametersBut("minimizeWellSeparationCore",["checkWellSeparation","jsonOutput"])
 
 # Which ones require (one of) another parameter(s)
 requiredParameters = [
     ("restrictToReachableStates",["analyzeInitialPositions"]),
     ("simpleRecovery",["explicitStrategy","symbolicStrategy","simpleSymbolicStrategy"]),
-    ("jsonOutput",["explicitStrategy", "counterStrategy"]),
+    ("jsonOutput",["explicitStrategy", "counterStrategy", "checkWellSeparation"]),
+    ("minimizeWellSeparationCore",["checkWellSeparation"]),
 ]
 
 # -------------------------------------------------------
@@ -254,7 +260,8 @@ listOfPluginClasses = [
     ("XExtractPermissiveExplicitStrategy","extensionPermissiveExplicitStrategy.hpp"),
     ("XRoboticsSemantics","extensionRoboticsSemantics.hpp"),
     ("XTwoDimensionalCost","extensionTwoDimensionalCost.hpp"),
-    ("XComputeWeakenedSafetyAssumptions","extensionWeakenSafetyAssumptions.hpp")
+    ("XComputeWeakenedSafetyAssumptions","extensionWeakenSafetyAssumptions.hpp"),
+    ("XWellSeparation","extensionWellSeparation.hpp")
 ]
 
 # In which order do they have to be instantiated?
@@ -368,6 +375,17 @@ def counterStrategyExtraction(params):
         return ret
     return []
 listOfCommandLineCombinationToClassInstantiationMappers.append(counterStrategyExtraction)
+
+# Well-separation diagnostics
+def wellSeparation(params):
+    jo = "jsonOutput" in params
+    core = "minimizeWellSeparationCore" in params
+    if "checkWellSeparation" in params:
+        ret = [("XWellSeparation","true" if jo else "false","true" if core else "false")]
+        params.difference_update(["checkWellSeparation","jsonOutput","minimizeWellSeparationCore"])
+        return ret
+    return []
+listOfCommandLineCombinationToClassInstantiationMappers.append(wellSeparation)
 
 
 # Basic strategy extraction
@@ -564,5 +582,3 @@ for line in oldMainFile:
 with open("main.cpp","w") as mainFileFile:
     for a in newLines:
         mainFileFile.write(a)
-
-

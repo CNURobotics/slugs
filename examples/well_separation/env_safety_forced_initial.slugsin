@@ -1,0 +1,24 @@
+[INPUT]
+safe
+
+[OUTPUT]
+break_env
+
+[ENV_INIT]
+1
+
+[SYS_INIT]
+break_env
+
+[ENV_TRANS]
+| ! break_env safe'
+| ! break_env ! safe'
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+1
+
+[SYS_LIVENESS]
+1

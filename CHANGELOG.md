@@ -3,6 +3,17 @@
 This changelog follows a reverse-chronological layout for the `flexbe-synthesis` branch, with newest changes first.
 
 
+### 2026-07-27
+- Added an experimental `--checkWellSeparation` analysis mode implementing the
+  Maoz/Ringert (FSE 2016) GR(1) well-separation case diagnosis
+  (`extensionWellSeparation.hpp`), with JSON output, witnesses, and
+  named-assumption diagnostics. See the "Well-separation analysis" section of
+  `README.md` for details.
+- Added an opt-in `--minimizeWellSeparationCore` flag that computes a
+  1-minimal non-well-separated assumption core via delta debugging (DDMin),
+  with reachability correctly pinned to the original specification per
+  Maoz/Ringert Definition 3.
+
 ### 2026-07-22
 - Added a `--no-reorder` command-line flag to disable CUDD dynamic variable reordering (sifting) for the whole run, to allow controlled experiments comparing synthesis cost with reordering on vs. off. Reordering remains enabled by default; behavior with the flag absent is unchanged. The run's reordering status is now also reported in the CUDD stats block printed after `checkRealizability()`.
 - Added a post-sifting CUDD variable order dump to that same stats block, listing each level's variable name and CUDD index, using the existing 1:1 correspondence between Slugs variable numbers and CUDD variable indices (`Cudd_ReadInvPerm` + `variableNames`).

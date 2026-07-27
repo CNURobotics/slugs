@@ -1,0 +1,22 @@
+[INPUT]
+
+[OUTPUT]
+sys
+
+[ENV_INIT]
+1
+
+[SYS_INIT]
+1
+
+[ENV_TRANS]
+! sys
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+1
+
+[SYS_LIVENESS]
+1

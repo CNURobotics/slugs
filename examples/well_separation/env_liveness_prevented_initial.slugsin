@@ -1,0 +1,24 @@
+[INPUT]
+p
+
+[OUTPUT]
+hold
+
+[ENV_INIT]
+! p
+
+[SYS_INIT]
+1
+
+[ENV_TRANS]
+| ! hold | ! p p'
+| ! hold | p ! p'
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+p
+
+[SYS_LIVENESS]
+1

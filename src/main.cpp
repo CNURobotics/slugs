@@ -58,6 +58,7 @@
 #include "extensionTwoDimensionalCost.hpp"
 #include "extensionCooperativeGR1Strategy.hpp"
 #include "extensionOptimisticRecovery.hpp"
+#include "extensionWellSeparation.hpp"
 
 //===================================================================================
 // List of command line arguments
@@ -89,6 +90,8 @@ const char *commandLineArguments[] = {
     "--nonDeterministicMotion","Computes a controller using an non-deterministic motion abstraction.",
     "--twoDimensionalCost","Computes a controller that optimizes for waiting and action cost at the same time.",
     "--cooperativeGR1Strategy","Computes a controller strategy that is cooperative with its environment.",
+    "--checkWellSeparation","Runs experimental GR(1) well-separation diagnostics and emits a JSON result.",
+    "--minimizeWellSeparationCore","With --checkWellSeparation, computes an opt-in DDMin 1-minimal non-well-separated assumption core.",
     //-END-COMMAND-LINE-ARGUMENT-LIST
 
     // Not part of the generated block above (see plugin_combination_enumerator.py): these
@@ -164,6 +167,10 @@ OptionCombination optionCombinations[] = {
     OptionCombination("--biasForAction --symbolicStrategy",XExtractSymbolicStrategy<XBiasForAction<GR1Context>,false,false>::makeInstance),
     OptionCombination("--biasForAction --sysInitRoboticsSemantics",XRoboticsSemantics<XBiasForAction<GR1Context>>::makeInstance),
     OptionCombination("--biasForAction",XBiasForAction<GR1Context>::makeInstance),
+    OptionCombination("--checkWellSeparation --jsonOutput --minimizeWellSeparationCore",XWellSeparation<GR1Context,true,true>::makeInstance),
+    OptionCombination("--checkWellSeparation --jsonOutput",XWellSeparation<GR1Context,true,false>::makeInstance),
+    OptionCombination("--checkWellSeparation --minimizeWellSeparationCore",XWellSeparation<GR1Context,false,true>::makeInstance),
+    OptionCombination("--checkWellSeparation",XWellSeparation<GR1Context,false,false>::makeInstance),
     OptionCombination("--computeAbstractWinningTrace",XAbstractWinningTraceGenerator<GR1Context>::makeInstance),
     OptionCombination("--computeCNFFormOfTheSpecification",XComputeCNFFormOfTheSpecification<GR1Context>::makeInstance),
     OptionCombination("--computeIncompleteInformationEstimator",XIncompleteInformationEstimatorSynthesis<GR1Context>::makeInstance),

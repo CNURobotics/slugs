@@ -1,0 +1,29 @@
+[INPUT]
+cargo
+atStation
+
+[OUTPUT]
+mot_BWD
+lift_DROP
+
+[ENV_INIT]
+1
+
+[SYS_INIT]
+1
+
+[ENV_TRANS]
+## dropCargo: if lift is DROP, cargo is true in the next input valuation
+| ! lift_DROP cargo'
+## clearCargo: if motion is BWD, cargo is false in the next input valuation
+| ! mot_BWD ! cargo'
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+## findStat
+atStation
+
+[SYS_LIVENESS]
+1

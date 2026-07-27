@@ -1,0 +1,24 @@
+[INPUT]
+atStation
+
+[OUTPUT]
+mot_STOP
+
+[ENV_INIT]
+1
+
+[SYS_INIT]
+1
+
+[ENV_TRANS]
+1
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+## findStat
+atStation
+
+[SYS_LIVENESS]
+1

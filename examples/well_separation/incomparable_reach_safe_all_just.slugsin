@@ -1,0 +1,33 @@
+[INPUT]
+p
+q
+
+[OUTPUT]
+hold
+break_env
+
+[ENV_INIT]
+! p
+
+[SYS_INIT]
+1
+
+[ENV_TRANS]
+## holdSameFalse: holding outside p keeps p false
+| ! hold | p ! p'
+## holdSameTrue: holding inside p keeps p true
+| ! hold | ! p p'
+## breakQTrue: if p and break_env, q must become true
+| ! p | ! break_env q'
+## breakQFalse: if p and break_env, q must become false
+| ! p | ! break_env ! q'
+
+[SYS_TRANS]
+1
+
+[ENV_LIVENESS]
+## visitP
+p
+
+[SYS_LIVENESS]
+1
