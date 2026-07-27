@@ -90,6 +90,12 @@ const char *commandLineArguments[] = {
     "--twoDimensionalCost","Computes a controller that optimizes for waiting and action cost at the same time.",
     "--cooperativeGR1Strategy","Computes a controller strategy that is cooperative with its environment.",
     //-END-COMMAND-LINE-ARGUMENT-LIST
+
+    // Not part of the generated block above (see plugin_combination_enumerator.py): these
+    // flags do not select a synthesis mode/template, so they are intercepted directly in
+    // main()'s argument loop below and excluded from the option-combination lookup.
+    "--no-reorder","Disables CUDD dynamic variable reordering (sifting) for the whole run. By default, dynamic reordering is enabled.",
+    "--reorder-threshold","<N> Sets the live-node count at which the first automatic CUDD reordering fires (Cudd_SetNextReordering). By default, CUDD's own threshold (4004 nodes) is used. Ignored if --no-reorder is given.",
 };
 
 //===================================================================================
@@ -296,9 +302,41 @@ int main(int argc, const char **args) {
     std::list<std::string> filenames;
     std::set<std::string> parameters;
 
+    // '--no-reorder' and '--reorder-threshold' are global execution toggles rather than
+    // mode-selecting flags, so they are handled here directly and kept out of
+    // 'parameters'/'totalParameters', which are only used to look up which synthesis
+    // mode (template combination) to run.
+    bool disableCuddReordering = false;
+    unsigned int reorderingThreshold = 0;
+
     // Parse paramters
     for (int i=1;i<argc;i++) {
         std::string arg = args[i];
+        if (arg=="--no-reorder") {
+            disableCuddReordering = true;
+            continue;
+        }
+        if (arg=="--reorder-threshold") {
+            if (i+1>=argc) {
+                std::cerr << "Error: '--reorder-threshold' requires a numeric argument.\n\n";
+                printToolUsageHelp();
+                return 1;
+            }
+            std::string value = args[++i];
+            try {
+                size_t pos;
+                long parsed = std::stol(value, &pos);
+                if (pos!=value.size() || parsed<=0) {
+                    throw std::invalid_argument("not a positive integer");
+                }
+                reorderingThreshold = (unsigned int)parsed;
+            } catch (std::exception &) {
+                std::cerr << "Error: '--reorder-threshold' expects a positive integer, got '" << value << "'.\n\n";
+                printToolUsageHelp();
+                return 1;
+            }
+            continue;
+        }
         if (arg[0]=='-') {
             bool found = false;
             for (unsigned int i=0;i<sizeof(commandLineArguments)/sizeof(const char*);i+=2) {
@@ -334,6 +372,19 @@ int main(int argc, const char **args) {
         std::string totalParameters = os.str();
         for (unsigned int i=0;i<sizeof(optionCombinations)/sizeof(OptionCombination);i++) {
             if (optionCombinations[i].params==totalParameters) {
+
+                // Must be set before the context (and with it, the CUDD manager) is
+                // constructed below, since Cudd_AutodynEnable/Disable and
+                // Cudd_SetNextReordering have no retroactive effect on variables/
+                // reorderings that already happened.
+                BFManager::setReorderingEnabledForNewManagers(!disableCuddReordering);
+                BFManager::setReorderingThresholdForNewManagers(reorderingThreshold);
+                std::cerr << "CUDD dynamic reordering (sifting): " << (disableCuddReordering ? "disabled" : "enabled") << " (--no-reorder " << (disableCuddReordering ? "given" : "not given") << ")\n";
+                if (!disableCuddReordering) {
+                    std::cerr << "CUDD reorder-threshold (live nodes before first sift): " << (reorderingThreshold>0 ? std::to_string(reorderingThreshold) : "CUDD default (4004)") << (reorderingThreshold>0 ? " (--reorder-threshold given)" : "") << "\n";
+                } else if (reorderingThreshold>0) {
+                    std::cerr << "Note: '--reorder-threshold' given but ignored because '--no-reorder' disables dynamic reordering.\n";
+                }
 
                 // Found the combination - then instantiate context and perform synthesis.
                 GR1Context *context = (*(optionCombinations[i].factory))(filenames);

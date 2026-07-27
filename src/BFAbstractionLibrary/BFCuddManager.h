@@ -25,10 +25,31 @@ class BFBddVarVector;
 class BFBddManager: boost::noncopyable {
 private:
 	DdManager *mgr;
+	static bool reorderingEnabledForNewManagers;
+	static unsigned int reorderingThresholdForNewManagers;
 
 public:
-	BFBddManager(unsigned int maxMemoryInMB = 3096, float reorderingMaxBlowup = 1.2f);
+	BFBddManager(unsigned int maxMemoryInMB = 3096, float reorderingMaxBlowup = 1.2f, bool enableReordering = BFBddManager::reorderingEnabledForNewManagers, unsigned int reorderingThreshold = BFBddManager::reorderingThresholdForNewManagers);
 	~BFBddManager();
+
+	// Controls whether CUDD dynamic reordering (sifting) is turned on for BFBddManager
+	// instances constructed from this point onwards via the default 'enableReordering'
+	// argument above. Intended to be called once, before any BFBddManager is constructed
+	// (e.g. right after command-line parsing), since it has no effect on managers that
+	// already exist.
+	static void setReorderingEnabledForNewManagers(bool enable) {
+		reorderingEnabledForNewManagers = enable;
+	}
+
+	// Controls the CUDD live-node threshold (Cudd_SetNextReordering) at which the
+	// *first* automatic reordering fires for BFBddManager instances constructed from
+	// this point onwards, via the default 'reorderingThreshold' argument above. A
+	// value of 0 means "leave CUDD's own default (DD_FIRST_REORDER, 4004 nodes)".
+	// Intended to be called once, before any BFBddManager is constructed, same as
+	// setReorderingEnabledForNewManagers().
+	static void setReorderingThresholdForNewManagers(unsigned int threshold) {
+		reorderingThresholdForNewManagers = threshold;
+	}
 
 	void setAutomaticOptimisation(bool enable);
     void setReorderingMaxBlowup(float reorderingMaxBlowup);

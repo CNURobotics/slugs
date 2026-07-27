@@ -139,8 +139,22 @@ void GR1Context::execute() {
     std::cerr << "  - CUDD live node count: " << Cudd_ReadNodeCount(mgr.getMgr()) << "\n";
     std::cerr << "  - CUDD peak node count: " << Cudd_ReadPeakNodeCount(mgr.getMgr()) << "\n";
     std::cerr << "  - CUDD manager var count: " << Cudd_ReadSize(mgr.getMgr()) << "\n";
+    Cudd_ReorderingType reorderingMethod;
+    bool reorderingEnabled = Cudd_ReorderingStatus(mgr.getMgr(), &reorderingMethod) != 0;
+    std::cerr << "  - CUDD dynamic reordering: " << (reorderingEnabled ? "enabled" : "disabled") << "\n";
+    std::cerr << "  - CUDD next-reordering threshold (live nodes): " << Cudd_ReadNextReordering(mgr.getMgr()) << "\n";
     std::cerr << "  - CUDD reorderings: " << Cudd_ReadReorderings(mgr.getMgr()) << "\n";
     std::cerr << "  - CUDD reordering time: " << Cudd_ReadReorderingTime(mgr.getMgr()) << " ms\n";
+    std::cerr << "  - CUDD variable order (current level -> name [index]):\n";
+    {
+        int nofCuddVars = Cudd_ReadSize(mgr.getMgr());
+        for (int level = 0; level < nofCuddVars; level++) {
+            int index = Cudd_ReadInvPerm(mgr.getMgr(), level);
+            std::string varName = (index >= 0 && (unsigned int)index < variableNames.size())
+                ? variableNames[index] : "<unnamed>";
+            std::cerr << "      " << level << ": " << varName << " [" << index << "]\n";
+        }
+    }
     std::cerr << "  - CUDD garbage collections: " << Cudd_ReadGarbageCollections(mgr.getMgr()) << "\n";
     std::cerr << "  - CUDD GC time: " << Cudd_ReadGarbageCollectionTime(mgr.getMgr()) << " ms\n";
     std::cerr << "  - CUDD memory in use: " << Cudd_ReadMemoryInUse(mgr.getMgr()) << " bytes\n";

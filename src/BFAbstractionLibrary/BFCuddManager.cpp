@@ -13,22 +13,32 @@
 #include "dddmp.h"
 #include "mtr.h"
 
+bool BFBddManager::reorderingEnabledForNewManagers = true;
+unsigned int BFBddManager::reorderingThresholdForNewManagers = 0;
+
 /**
  * Creates a new BDDManager.
  *
  * @param maxMemoryInMB The amount of memory to be used. Must be <4096 as CUDD does not support more
  * @param reorderingMaxBlowup The maximal allowed blowup during sifting steps in the reordering algorithm. Standard is 1.2 - use 1.1 to have less reordering done. A value of 1.0 results in greedy reordering.
+ * @param enableReordering Whether CUDD dynamic reordering (sifting) should be enabled for this manager. Defaults to whatever was last set via setReorderingEnabledForNewManagers(), which itself defaults to true.
+ * @param reorderingThreshold Live-node count at which the first automatic reordering fires (Cudd_SetNextReordering). 0 keeps CUDD's own default. Defaults to whatever was last set via setReorderingThresholdForNewManagers(), which itself defaults to 0.
  * @author ehlers
  */
-BFBddManager::BFBddManager(unsigned int maxMemoryInMB, float reorderingMaxBlowup) {
+BFBddManager::BFBddManager(unsigned int maxMemoryInMB, float reorderingMaxBlowup, bool enableReordering, unsigned int reorderingThreshold) {
 
 	mgr = Cudd_Init(0, 0, CUDD_UNIQUE_SLOTS, CUDD_CACHE_SLOTS, (long) maxMemoryInMB * 1024UL * 1024UL);
 
 	// Configuring the manager
-	Cudd_AutodynEnable(mgr, CUDD_REORDER_SIFT);
+	if (enableReordering) {
+		Cudd_AutodynEnable(mgr, CUDD_REORDER_SIFT);
+		if (reorderingThreshold > 0) {
+			Cudd_SetNextReordering(mgr, reorderingThreshold);
+		}
+	}
 	Cudd_SetMaxGrowth(mgr, reorderingMaxBlowup);
 	Cudd_SetMinHit(mgr, 1);
-	setAutomaticOptimisation(true);
+	setAutomaticOptimisation(enableReordering);
 }
 
 BFBddManager::~BFBddManager() {

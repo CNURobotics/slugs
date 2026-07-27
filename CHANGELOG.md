@@ -3,6 +3,10 @@
 This changelog follows a reverse-chronological layout for the `flexbe-synthesis` branch, with newest changes first.
 
 
+### 2026-07-22
+- Added a `--no-reorder` command-line flag to disable CUDD dynamic variable reordering (sifting) for the whole run, to allow controlled experiments comparing synthesis cost with reordering on vs. off. Reordering remains enabled by default; behavior with the flag absent is unchanged. The run's reordering status is now also reported in the CUDD stats block printed after `checkRealizability()`.
+- Added a post-sifting CUDD variable order dump to that same stats block, listing each level's variable name and CUDD index, using the existing 1:1 correspondence between Slugs variable numbers and CUDD variable indices (`Cudd_ReadInvPerm` + `variableNames`).
+
 ### 2026-04-14
 - Added CHANGELOG.md
 - Added `tools/mealy2dot.py`, a utility that converts Slugs `.slugsin` specifications plus JSON strategy or counterstrategy output into Graphviz `.dot` visualizations, with optional rendered graph artifacts when Graphviz is available.
