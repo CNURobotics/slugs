@@ -1,5 +1,18 @@
 slugs - SmalL bUt Complete GROne Synthesizer
 ============================================
+
+This repository is the CNU Robotics customized version of Slugs. It keeps the
+upstream Slugs core while adding tooling, diagnostics, and experiment support
+used by the
+[CNU Robotics FlexBE synthesis toolchain](https://github.com/CNURobotics/flexbe_synthesis),
+which depends on this Slugs fork.
+See [CHANGELOG.md](CHANGELOG.md) for branch-specific changes, including
+version/logging updates and helper-tool improvements. A key addition is the
+experimental [well-separation analysis](#well-separation-analysis) mode for
+diagnosing GR(1) environment assumptions.
+
+----
+
 Slugs is a stand-alone reactive synthesis tool for generalized reactivity(1) synthesis. It uses binary decision diagrams (BDDs) as the primary data structure for efficient symbolic reasoning. 
 
 If you want to cite slugs in a scientific paper, please cite its tool paper:
