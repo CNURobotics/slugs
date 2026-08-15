@@ -619,10 +619,10 @@ def performConversion(inputFile,thoroughly):
                     if isSlugsFormula:
                         print(a)
                     else:
-                        print(f"Not slugs? {a}", file=sys.stderr)
+                        # print(f"Not slugs? {a}", file=sys.stderr)
                         # Try to parse!
                         tree = parseLTL(a,reasonForNotBeingASlugsFormula)
-                        printTree(tree)
+                        # printTree(tree)
                         currentLine = translateToSlugsFormat(tree)
                         print(currentLine)
             # print("")

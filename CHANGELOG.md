@@ -7,6 +7,12 @@ This changelog follows a reverse-chronological layout for the `flexbe-synthesis`
 - Added centralized Slugs version metadata for the CNU Robotics customized
   version, exposed via `--help`, the new `--version` flag, and per-run stderr
   logs/experiment summaries.
+- Extended `tools/mealy2dot.py` with goal-unreachable trap
+  highlighting, edge-color option aliases, and cleaner Graphviz rendering that avoids extensionless temporary artifacts.
+- Cleaned up helper-tool regressions by removing stray structured-compiler
+  debug output, restoring repository-relative Slugs lookup in
+  `tools/cursesSimulator.py`, and fixing Python 3/report HTML handling in
+  `tools/createSpecificationReport.py`.
 
 ### 2026-07-27
 - Added an experimental `--checkWellSeparation` analysis mode implementing the

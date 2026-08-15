@@ -183,9 +183,8 @@ def createSpecificationReport(slugsFile):
             print("<p>However, the specification is <B>unrealizable in the robotics semantics</B>.</p>")
     else:
         print("<p>The specification is <B>unrealizable</B>!</p>")
-        print("</details>")
-        sys.stdout.flush()
         # sys.exit(-1)
+        sys.stdout.flush()
 
     print("</details>")
     sys.stdout.flush()
@@ -344,7 +343,7 @@ def createSpecificationReport(slugsFile):
     print("<details>")
     print("<summary>8. The Effect of Stuck-at-0/1 Faults</summary>")
     print("<pre class=\"details\">")
-    command = "python " + analyzeStuckAtConstantTool+" "+slugsFile+" > "+slugsReturnFile+" 2> "+slugsErrorFile
+    command = "python3 " + analyzeStuckAtConstantTool+" "+slugsFile+" > "+slugsReturnFile+" 2> "+slugsErrorFile
     print("Executing: "+command, file=sys.stderr)
     retValue = os.system(command)
     if (retValue!=0):

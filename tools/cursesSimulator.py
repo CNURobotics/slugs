@@ -37,7 +37,7 @@ specFile = " ".join(sys.argv[1:])
 # Start slugs
 # ==================================
 slugsLink = sys.argv[0][0:sys.argv[0].rfind("cursesSimulator.py")]+"../src/slugs"
-slugsLink = "/usr/local/bin/slugs"
+# slugsLink = "/usr/local/bin/slugs"
 
 slugsProcess = subprocess.Popen(slugsLink+" --interactiveStrategy "+specFile, shell=True, bufsize=1048000, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
@@ -363,8 +363,8 @@ try:
         stdscr.addstr(ysize-1, 0, "Press (h) for help.",curses.color_pair(1))
         stdscr.insstr(ysize-1, 20, " ",curses.color_pair(1))
 
-        print "Need width ={", maxLenInputOrOutputName
-        print "Need height={", len(structuredVariables)+13
+        # print "Need width ={", maxLenInputOrOutputName
+        # print "Need height={", len(structuredVariables)+13
 
         # Main part
         #if (xsize<max(72,maxLenInputOrOutputName+46)):
