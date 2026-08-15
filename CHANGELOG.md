@@ -3,6 +3,11 @@
 This changelog follows a reverse-chronological layout for the `flexbe-synthesis` branch, with newest changes first.
 
 
+### 2026-08-15
+- Added centralized Slugs version metadata for the CNU Robotics customized
+  version, exposed via `--help`, the new `--version` flag, and per-run stderr
+  logs/experiment summaries.
+
 ### 2026-07-27
 - Added an experimental `--checkWellSeparation` analysis mode implementing the
   Maoz/Ringert (FSE 2016) GR(1) well-separation case diagnosis

@@ -1,5 +1,6 @@
 #include "BF.h"
 #include "gr1context.hpp"
+#include "version.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -130,6 +131,7 @@ void GR1Context::execute() {
     std::cerr << std::fixed << std::setprecision(6);
     std::cerr << "  - Synthesis time (checkRealizability only): " << synthesisSeconds << " s\n";
     std::cerr << "Experiment summary:\n";
+    std::cerr << "  - Tool version: " << SLUGS_VERSION << " (" << SLUGS_VARIANT << ")\n";
     std::cerr << "  - AP_I (PreInput vars): " << apInputCount << "\n";
     std::cerr << "  - AP_O (PreOutput vars): " << apOutputCount << "\n";
     std::cerr << "  - |ENV_TRANS|: " << safetyEnvFormulae.size() << "\n";

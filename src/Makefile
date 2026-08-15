@@ -24,6 +24,7 @@ OBJECTS       = main.o \
 
 # Headers
 HEADERS_BUT_EXTENSIONS = gr1context.hpp variableManager.hpp variableTypes.hpp \
+	version.hpp \
 	BFAbstractionLibrary/bddDump.h \
 	BFAbstractionLibrary/BFCudd.h \
 	BFAbstractionLibrary/BFCuddInlines.h \
@@ -53,5 +54,4 @@ main.o : main.cpp ../lib/cudd-3.0.0/config.h extension*.hpp $(HEADERS_BUT_EXTENS
 
 %.o : %.c ../lib/cudd-3.0.0/config.h
 	$(CC) -c $(CFLAGS) $(INCPATH) -o "$@" "$<"
-
 

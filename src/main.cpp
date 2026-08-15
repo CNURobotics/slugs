@@ -35,6 +35,7 @@
 
 #include <fstream>
 #include <cstring>
+#include "version.hpp"
 #include "extensionComputeCNFFormOfTheSpecification.hpp"
 #include "extensionBiasForAction.hpp"
 #include "extensionExtractExplicitStrategy.hpp"
@@ -268,10 +269,20 @@ OptionCombination optionCombinations[] = {
 };
 
 /**
+ * @brief Prints the Slugs tool banner and version information to stderr.
+ */
+void printToolBanner() {
+    std::cerr << "SLUGS: SmaLl bUt complete Gr(1) Synthesis tool (see the documentation for an author list).\n";
+    std::cerr << "Version: " << SLUGS_VERSION << " (" << SLUGS_VARIANT << ")\n";
+}
+
+/**
  * @brief Prints the help to stderr that the user sees when running "slugs --help" or when supplying
  *        incorrect parameters
  */
 void printToolUsageHelp() {
+    printToolBanner();
+    std::cerr << "\n";
     std::cerr << "Usage of slugs:\n";
     std::cerr << "slugs [options] <FileNames> \n\n";
     std::cerr << "The first input file is supposed to be in 'slugs' format. The others are in the format required by the options used. \n\n";
@@ -304,8 +315,6 @@ void printToolUsageHelp() {
  * @return the error code: >0 means that some error has occured. In case of realizability or unrealizability, a value of 0 is returned.
  */
 int main(int argc, const char **args) {
-    std::cerr << "SLUGS: SmaLl bUt complete Gr(1) Synthesis tool (see the documentation for an author list).\n";
-
     std::list<std::string> filenames;
     std::set<std::string> parameters;
 
@@ -319,6 +328,14 @@ int main(int argc, const char **args) {
     // Parse paramters
     for (int i=1;i<argc;i++) {
         std::string arg = args[i];
+        if (arg=="--help") {
+            printToolUsageHelp();
+            return 0;
+        }
+        if (arg=="--version") {
+            std::cerr << "slugs " << SLUGS_VERSION << " (" << SLUGS_VARIANT << ")\n";
+            return 0;
+        }
         if (arg=="--no-reorder") {
             disableCuddReordering = true;
             continue;
@@ -361,6 +378,8 @@ int main(int argc, const char **args) {
             filenames.push_back(arg);
         }
     }
+
+    printToolBanner();
 
     // Catch all errors from this point onwards
     try {
